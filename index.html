@@ -1,564 +1,855 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>FlashCar — flashcards that stick</title>
+<meta name="color-scheme" content="dark light">
+<title>FlashCar</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400..800&display=swap" rel="stylesheet">
 <style>
+/* Obsidian (dark) and whitestone (light). Colour carries meaning only:
+   blue = mastered, cyan = learning, red = slipped back or wrong. */
 :root{
-  --bg:#0b1022; --surface:#151b33; --raise:#1e2646; --fg:#f3f5fc; --muted:#9aa3c2; --line:#2a3358;
-  --primary:#4a66ff; --primary-ink:#ffffff; --accent:#ffcd1f; --accent-ink:#1b1500;
-  --ok:#35c98b; --bad:#ff6b6b; --shadow:0 10px 30px rgba(0,0,0,.35);
+  --bg:#0b0c0f; --surface:#131419; --raise:#1c1e25; --line:#2a2d36; --axis:#3a3e4a;
+  --fg:#eeeeeb; --muted:#a0a3ab; --track:#262830;
+  --blue:#2a66de; --cyan:#18a5c0; --red:#e0524f;
+  --blue-ink:#7fb0f5; --red-ink:#ff8d88; --on-cyan:#0b0c0f;
 }
 :root[data-theme="light"]{
-  --bg:#f5f6fb; --surface:#ffffff; --raise:#eceffa; --fg:#14182d; --muted:#5a6384; --line:#dde2f1;
-  --primary:#3b56f5; --primary-ink:#ffffff; --accent:#ffcd1f; --accent-ink:#1b1500;
-  --ok:#1f9d68; --bad:#d94545; --shadow:0 10px 30px rgba(30,40,90,.12);
+  --bg:#efefec; --surface:#fafaf8; --raise:#e5e5e1; --line:#d6d6d1; --axis:#bdbdb7;
+  --fg:#0c0d10; --muted:#5b5d64; --track:#deded9;
+  --blue:#1b52c9; --cyan:#0c93b3; --red:#cf3a3a;
+  --blue-ink:#1b52c9; --red-ink:#b42b2b; --on-cyan:#ffffff;
 }
 *{box-sizing:border-box}
 html,body{margin:0}
-body{background:var(--bg);color:var(--fg);font:16px/1.5 "Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+body{background:var(--bg);color:var(--fg);font:16px/1.5 Onest,system-ui,-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;-webkit-font-smoothing:antialiased;overflow-x:hidden}
 a{color:inherit;text-decoration:none}
-button,input,select,textarea{font:inherit;color:inherit}
+button,input,select{font:inherit;color:inherit}
 button{cursor:pointer}
-h1,h2,h3{margin:0;line-height:1.2;letter-spacing:-.02em}
-h1{font-size:clamp(26px,4vw,36px);font-weight:800}
-h2{font-size:20px;font-weight:700}
+h1,h2,h3{margin:0;line-height:1.15;letter-spacing:-.025em;font-weight:800}
+h1{font-size:clamp(28px,4.4vw,40px)}
+h2{font-size:21px;font-weight:700}
+h3{font-size:16px;font-weight:700;letter-spacing:-.01em}
 p{margin:0}
 small{font-size:13px;color:var(--muted)}
-:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+img{max-width:100%}
+:focus-visible{outline:2px solid var(--fg);outline-offset:2px}
 
 /* header */
-.top{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+.top{position:sticky;top:0;z-index:20;background:var(--bg);border-bottom:1px solid var(--line)}
 .top-in{max-width:1120px;margin:0 auto;padding:10px 16px;display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:16px}
-.logo{display:flex;align-items:center;gap:8px;font-weight:800;font-size:20px;letter-spacing:-.03em}
-.logo svg{width:34px;height:34px;flex:none}
-.logo em{font-style:normal;color:var(--accent)}
-nav{display:flex;gap:4px;justify-content:center}
-nav a{padding:9px 16px;border-radius:999px;font-weight:600;font-size:15px;color:var(--muted);display:flex;align-items:center;gap:7px;white-space:nowrap}
-nav a svg{width:18px;height:18px}
+.logo{display:flex;align-items:center;gap:8px;font-weight:800;font-size:20px;letter-spacing:-.03em;font-style:italic}
+.logo svg{width:30px;height:30px;flex:none}
+.logo .bolt{fill:var(--bg)}
+nav{display:flex;gap:2px;justify-content:center}
+nav a{padding:8px 14px;border-radius:8px;font-weight:600;font-size:15px;color:var(--muted);display:flex;align-items:center;gap:7px;white-space:nowrap}
+nav a svg,.ib svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 nav a:hover{color:var(--fg);background:var(--raise)}
-nav a.on{color:var(--primary-ink);background:var(--primary)}
-.top-r{display:flex;align-items:center;gap:10px}
-.avatar{width:38px;height:38px;border-radius:50%;background:var(--accent);color:var(--accent-ink);font-weight:800;display:grid;place-items:center;flex:none;border:2px solid transparent}
-.avatar.on{border-color:var(--fg)}
-.avatar.big{width:76px;height:76px;font-size:32px}
-@media (max-width:760px){
+nav a.on{color:var(--bg);background:var(--fg)}
+.top-r{display:flex;align-items:center;gap:8px}
+.segc{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--surface)}
+.segc button{border:0;background:transparent;padding:7px 10px;font-size:13px;font-weight:700;color:var(--muted)}
+.segc button.on{background:var(--fg);color:var(--bg)}
+.ib{width:36px;height:36px;display:grid;place-items:center;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+.ib:hover{background:var(--raise)}
+.avatar{width:36px;height:36px;border-radius:50%;background:var(--fg);color:var(--bg);font-weight:800;display:grid;place-items:center;flex:none;overflow:hidden}
+.avatar img{width:100%;height:100%;object-fit:cover;display:block}
+.avatar.big{width:96px;height:96px;font-size:38px}
+@media (max-width:820px){
   .top-in{grid-template-columns:1fr auto;row-gap:8px}
   nav{grid-column:1/-1;grid-row:2;display:grid;grid-template-columns:repeat(4,1fr)}
-  nav a{justify-content:center;padding:8px 4px;font-size:13px;gap:5px}
-  nav a svg{width:16px;height:16px}
-  .hide-s{display:none}
+  nav a{justify-content:center;padding:8px 2px;font-size:13px;gap:5px}
+  nav a svg{width:15px;height:15px}
+  .hide-s{display:none!important}
 }
 
 main{max-width:1120px;margin:0 auto;padding:28px 16px 80px}
 .stack>*+*{margin-top:28px}
 .head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap}
-.sub{color:var(--muted);margin-top:6px}
+.sub{color:var(--muted);margin-top:6px;max-width:68ch}
+.two{display:grid;gap:16px;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);align-items:start}
+.two.even{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+.two>*,.hero>*{min-width:0}
+@media (max-width:820px){.two,.two.even{grid-template-columns:minmax(0,1fr)}}
 
-/* buttons */
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid var(--line);background:var(--surface);padding:10px 16px;border-radius:12px;font-weight:700;font-size:15px;white-space:nowrap}
+/* buttons and inputs */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid var(--line);background:var(--surface);padding:10px 16px;border-radius:8px;font-weight:700;font-size:15px;white-space:nowrap;position:relative}
 .btn:hover{background:var(--raise)}
-.btn.pri{background:var(--primary);border-color:var(--primary);color:var(--primary-ink)}
-.btn.pri:hover{filter:brightness(1.1)}
-.btn.acc{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
-.btn.sm{padding:7px 12px;font-size:13px;border-radius:10px}
-.btn.ghost{background:transparent}
-.btn.danger{color:var(--bad)}
-.btn[disabled]{opacity:.5;cursor:default}
-
-/* inputs */
+.btn.pri{background:var(--fg);border-color:var(--fg);color:var(--bg)}
+.btn.pri:hover{opacity:.88}
+.btn.sm{padding:7px 12px;font-size:13px}
+.btn.danger{color:var(--red-ink)}
+.file input{position:absolute;opacity:0;width:1px;height:1px}
+.file:focus-within{outline:2px solid var(--fg);outline-offset:2px}
 .field{display:block}
-.field span{display:block;font-size:13px;font-weight:600;color:var(--muted);margin-bottom:6px}
-input[type=text],input[type=search],select,textarea{width:100%;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:11px 14px;outline:none}
-input:focus,select:focus,textarea:focus{border-color:var(--primary)}
-.search{position:relative;flex:1;min-width:200px;max-width:420px}
+.field>span{display:block;font-size:13px;font-weight:600;color:var(--muted);margin-bottom:6px}
+input[type=text],input[type=search],select{width:100%;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:11px 14px;outline:none}
+input:focus,select:focus{border-color:var(--fg)}
+.search{max-width:440px}
 .chips{display:flex;gap:8px;flex-wrap:wrap}
-.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:7px 14px;font-size:14px;font-weight:600;color:var(--muted)}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:7px 12px;font-size:14px;font-weight:600;color:var(--muted)}
 .chip:hover{color:var(--fg)}
 .chip.on{background:var(--fg);color:var(--bg);border-color:var(--fg)}
 
-/* cards and rows */
-.panel{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:20px}
-.grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}
-.tile{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:10px;min-width:0;border-bottom:4px solid var(--line);transition:border-color .15s,transform .15s}
-.tile:hover{border-bottom-color:var(--accent);transform:translateY(-2px)}
-.tile h3{font-size:16px;font-weight:700}
-.tile p{font-size:14px;color:var(--muted);flex:1}
-.tile-f{display:flex;align-items:center;justify-content:space-between;gap:8px}
-.tag{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px;background:var(--raise);color:var(--muted);width:max-content;max-width:100%}
-.rows{background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden}
-.row{display:flex;align-items:center;gap:14px;padding:14px 16px;border-top:1px solid var(--line);min-width:0}
+/* surfaces */
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px;min-width:0}
+.rows{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.row{display:flex;align-items:center;gap:14px;padding:13px 16px;border-top:1px solid var(--line);min-width:0}
 .row:first-child{border-top:0}
 a.row:hover{background:var(--raise)}
-.ticon{width:42px;height:42px;border-radius:12px;background:var(--raise);display:grid;place-items:center;font-size:20px;flex:none}
+.ticon{width:36px;height:36px;border-radius:8px;background:var(--raise);display:grid;place-items:center;flex:none;font-weight:700;font-size:17px}
+.ticon svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 .rmain{flex:1;min-width:0}
 .rmain b{display:block;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.rprog{width:150px;flex:none;text-align:right}
-.rprog small{display:block;margin-top:4px}
-@media (max-width:520px){.rprog{width:84px}}
-.bar{display:flex;height:8px;border-radius:99px;background:var(--raise);overflow:hidden}
-.bar i{display:block;height:100%}
-.bar .m{background:var(--ok)}
-.bar .l{background:var(--accent)}
-.bar.lg{height:12px}
-.empty{text-align:center;padding:36px 16px;color:var(--muted);border:1px dashed var(--line);border-radius:16px}
+.rprog{width:170px;flex:none;text-align:right}
+.rprog small{display:block;margin-top:5px}
+@media (max-width:520px){.rprog{width:96px}}
+.empty{text-align:center;padding:32px 16px;color:var(--muted);border:1px dashed var(--line);border-radius:12px}
 .empty b{display:block;color:var(--fg);font-size:17px;margin-bottom:4px}
 .empty .btn{margin-top:14px}
 
-/* stats */
-.stats{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
-.stat{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px}
-.stat b{display:block;font-size:30px;font-weight:800;letter-spacing:-.03em;line-height:1.1}
-.stat span{font-size:13px;color:var(--muted);font-weight:600}
-.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--muted);font-weight:600}
-.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;background:var(--line)}
-.dot.m{background:var(--ok)}.dot.l{background:var(--accent)}
-.week{display:grid;grid-template-columns:repeat(7,1fr);gap:10px;align-items:end;height:150px}
-.week div{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:6px;font-size:12px;color:var(--muted);font-weight:600}
-.week i{display:block;width:100%;max-width:44px;border-radius:8px 8px 3px 3px;background:var(--primary);min-height:4px}
-.week i.z{background:var(--raise)}
-.two{display:grid;gap:14px;grid-template-columns:1fr 1fr}
-@media (max-width:760px){.two{grid-template-columns:1fr}}
+/* progress marks */
+.seg{display:flex;gap:2px;height:8px;border-radius:99px;overflow:hidden;width:100%}
+.seg i{display:block;min-width:3px;font-style:normal}
+.seg .m,.sw.m{background:var(--blue)}
+.seg .l,.sw.l{background:var(--cyan)}
+.seg .r,.sw.r{background:var(--red)}
+.seg .n,.sw.n{background:var(--track)}
+.seg.tall{height:28px;border-radius:0}
+.seg.tall i{border-radius:4px;display:flex;align-items:center;padding-left:8px;font-size:13px;font-weight:700;color:#fff;overflow:hidden}
+.seg.tall .l{color:var(--on-cyan)}
+.seg.tall .n{color:var(--muted)}
+.sw{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;flex:none}
+.legend{display:flex;gap:6px 16px;flex-wrap:wrap;font-size:13px;color:var(--muted);font-weight:500}
+.legend span{display:inline-flex;align-items:center}
+.meter{height:8px;border-radius:99px;background:color-mix(in srgb,var(--blue) 22%,var(--surface));overflow:hidden}
+.meter i{display:block;height:100%;background:var(--blue);border-radius:99px}
 
-/* hero */
-.hero{background:linear-gradient(135deg,var(--primary),#7b5cff);color:#fff;border-radius:22px;padding:28px;display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap}
-.hero p{opacity:.9;margin-top:6px}
-.hero .streak{background:rgba(255,255,255,.16);border-radius:16px;padding:12px 18px;font-weight:700;text-align:center}
-.hero .streak b{display:block;font-size:28px;line-height:1}
-.cont{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
-.cont .rmain{min-width:200px}
+/* home */
+.hero{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:16px;align-items:stretch}
+@media (max-width:820px){.hero{grid-template-columns:minmax(0,1fr)}}
+.hero-a{padding:6px 0}
+.hero-a p{color:var(--muted);margin-top:10px;max-width:52ch}
+.hero-a .btn{margin-top:18px;white-space:normal;text-align:left}
+.goal b{font-size:44px;font-weight:700;letter-spacing:-.04em;line-height:1.1}
+.goal b span{font-size:18px;color:var(--muted);font-weight:500;letter-spacing:0}
+.goal .meter{margin:14px 0 10px}
+.kpis{display:grid;gap:12px;grid-template-columns:repeat(4,1fr)}
+.kpis.five{grid-template-columns:repeat(5,1fr)}
+@media (max-width:820px){.kpis,.kpis.five{grid-template-columns:repeat(2,1fr)}}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;min-width:0}
+.kpi .kl{display:flex;align-items:center;font-size:13px;color:var(--muted);font-weight:500}
+.kpi b{display:block;font-size:32px;font-weight:700;letter-spacing:-.03em;line-height:1.15;margin-top:4px}
+.delta{font-size:13px;font-weight:600}
+.delta.up{color:var(--blue-ink)}
+.delta.down{color:var(--red-ink)}
+.subj{display:grid;grid-template-columns:36px minmax(96px,1fr) 2fr auto;gap:6px 14px;align-items:center;padding:12px 0;border:0;border-top:1px solid var(--line);width:100%;background:transparent;text-align:left}
+.subj:first-of-type{border-top:0}
+.subj:hover .sn{text-decoration:underline}
+.subj .sn{font-weight:700;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.subj .fig{font-size:13px;color:var(--muted);white-space:nowrap;text-align:right;min-width:92px}
+.subj .fig b{color:var(--fg);font-size:15px;margin-right:6px}
+@media (max-width:560px){.subj{grid-template-columns:36px 1fr auto}.subj .seg{grid-column:2/4;grid-row:2}.subj .fig{grid-column:3;grid-row:1}}
+.plot{position:relative;height:134px;display:grid;grid-auto-flow:column;grid-auto-columns:1fr;align-items:end;border-bottom:1px solid var(--axis);margin-top:14px;padding-right:26px}
+.gl{position:absolute;left:0;right:0;border-top:1px solid var(--line)}
+.gl em{position:absolute;right:0;top:-17px;font-size:11px;color:var(--muted);font-style:normal}
+.colw{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;position:relative;z-index:1}
+.colw:hover .col{opacity:.8}
+.col{display:flex;flex-direction:column;gap:2px;width:min(24px,62%)}
+.col i{display:block}
+.col .w{background:var(--red)}
+.col .r{background:var(--blue)}
+.col i:first-child{border-radius:4px 4px 0 0}
+.cap{font-size:12px;font-weight:700;margin-bottom:4px}
+.xax{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;text-align:center;font-size:12px;color:var(--muted);margin-top:6px;padding-right:26px}
+details.tv{margin-top:14px;font-size:13px}
+details.tv summary{cursor:pointer;color:var(--muted);font-weight:600;width:max-content}
+table{border-collapse:collapse;width:100%;margin-top:10px;font-size:13px}
+th,td{text-align:right;padding:6px 8px;border-top:1px solid var(--line);font-variant-numeric:tabular-nums}
+th:first-child,td:first-child{text-align:left}
+th{color:var(--muted);font-weight:600;border-top:0}
+.rev{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--line)}
+.rev:first-of-type{border-top:0}
+.rev .rmain b{font-size:17px}
+
+/* discover */
+.grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.tile:hover{border-color:var(--axis)}
+.tile-h{display:flex;align-items:center;gap:10px}
+.tile p{font-size:14px;color:var(--muted);flex:1}
+.tile-f{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.tile-b{display:flex;gap:6px}
 
 /* set page */
 .modes{display:grid;gap:12px;grid-template-columns:repeat(3,1fr)}
-.mode{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px;text-align:left;display:flex;gap:12px;align-items:center;border-bottom:4px solid var(--line)}
-.mode:hover{border-bottom-color:var(--primary)}
-.mode span{font-size:26px}
-.mode b{display:block}
+.mode{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;display:block}
+.mode:hover{border-color:var(--fg)}
+.mode b{display:block;font-size:17px}
 @media (max-width:640px){.modes{grid-template-columns:1fr}}
-.term{display:grid;grid-template-columns:1fr 1.6fr auto;gap:16px;padding:14px 16px;border-top:1px solid var(--line);align-items:center}
+.term{display:grid;grid-template-columns:1fr 1.5fr auto;gap:16px;padding:13px 16px;border-top:1px solid var(--line);align-items:center}
 .term:first-child{border-top:0}
-.term b{font-weight:700;overflow-wrap:anywhere}
-.term span{color:var(--muted);overflow-wrap:anywhere}
-@media (max-width:560px){.term{grid-template-columns:1fr auto}.term span{grid-column:1;grid-row:2}}
-.pill{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;padding:4px 9px;border-radius:999px;background:var(--raise);color:var(--muted);white-space:nowrap}
-.pill.m{background:color-mix(in srgb,var(--ok) 20%,transparent);color:var(--ok)}
-.pill.l{background:color-mix(in srgb,var(--accent) 24%,transparent);color:color-mix(in srgb,var(--accent) 60%,var(--fg))}
+.term b{font-weight:700;overflow-wrap:anywhere;display:block}
+.term b[lang]{font-size:24px;font-weight:500}
+.term .td{color:var(--muted);overflow-wrap:anywhere;display:flex;align-items:center;gap:10px}
+@media (max-width:560px){.term{grid-template-columns:1fr auto}.term .td{grid-column:1/3;grid-row:2}}
+.pill{display:inline-flex;align-items:center;font-size:12px;font-weight:600;color:var(--muted);white-space:nowrap}
+.cimg{border-radius:6px;display:block;object-fit:cover;flex:none}
+.cimg.sm{width:44px;height:44px}
+.cimg.big{max-height:150px;width:auto;margin:0 auto 12px;object-fit:contain}
 
 /* study */
 .study{max-width:760px;margin:0 auto}
 .study-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
 .study-top b{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.flip{perspective:1400px;height:min(380px,56vh);cursor:pointer;margin:16px 0}
-.flip-in{position:relative;width:100%;height:100%;transition:transform .45s cubic-bezier(.3,.9,.3,1);transform-style:preserve-3d}
+.flip{perspective:1400px;height:min(400px,58vh);cursor:pointer;margin:16px 0}
+.flip-in{position:relative;width:100%;height:100%;transition:transform .4s cubic-bezier(.3,.9,.3,1);transform-style:preserve-3d}
 .flip.f .flip-in{transform:rotateX(180deg)}
-.face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;background:var(--surface);border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow);display:grid;place-items:center;padding:28px;text-align:center;font-size:clamp(22px,4vw,32px);font-weight:700;overflow:auto;overflow-wrap:anywhere}
-.face.b{transform:rotateX(180deg);font-weight:500;font-size:clamp(19px,3.2vw,26px)}
-.face::before{content:attr(data-l);position:absolute;top:14px;left:18px;font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;background:var(--surface);border:1px solid var(--axis);border-radius:12px;display:grid;place-items:center;padding:36px 24px 24px;text-align:center;overflow:auto}
+.face.b{transform:rotateX(180deg)}
+.fl{position:absolute;top:12px;left:16px;font-size:13px;font-weight:600;color:var(--muted)}
+.tt{font-size:clamp(26px,5vw,40px);font-weight:700;letter-spacing:-.02em;overflow-wrap:anywhere}
+.tt.zh{font-size:clamp(64px,15vw,104px);font-weight:500;letter-spacing:0;line-height:1.1}
+.tt.zh.long{font-size:clamp(44px,10vw,72px)}
+.py{font-size:clamp(20px,3.6vw,28px);color:var(--muted);margin-bottom:8px}
+.dd{font-size:clamp(20px,3.4vw,28px);font-weight:600;overflow-wrap:anywhere}
 .ctrl{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
 .ctrl .btn{flex:1;max-width:240px;padding:14px}
 .hint{text-align:center;color:var(--muted);font-size:13px;margin-top:14px}
-.q{background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:28px;box-shadow:var(--shadow)}
-.q small{text-transform:uppercase;letter-spacing:.06em;font-weight:700;font-size:12px}
-.q h2{font-size:clamp(22px,4vw,30px);margin:10px 0 24px;overflow-wrap:anywhere}
-.opts{display:grid;gap:10px;grid-template-columns:1fr 1fr}
+.q{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:24px}
+.q .tt{margin:8px 0 6px}
+.q .tt.zh{font-size:clamp(48px,11vw,72px)}
+.q .py{font-size:20px;min-height:30px}
+.opts{display:grid;gap:10px;grid-template-columns:1fr 1fr;margin-top:14px}
 @media (max-width:600px){.opts{grid-template-columns:1fr}}
-.opt{text-align:left;background:var(--bg);border:2px solid var(--line);border-radius:14px;padding:14px;font-weight:600;display:flex;gap:10px;overflow-wrap:anywhere}
-.opt:hover:not([disabled]){border-color:var(--primary)}
-.opt kbd{font:inherit;color:var(--muted);font-weight:800}
-.opt.ok{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 14%,transparent)}
-.opt.no{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 14%,transparent)}
-.fb{margin-top:18px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;font-weight:700}
+.opt{text-align:left;background:var(--bg);border:2px solid var(--line);border-radius:10px;padding:12px;font-weight:600;display:flex;gap:10px;align-items:center;overflow-wrap:anywhere}
+.opt:hover:not([disabled]){border-color:var(--fg)}
+.opt kbd{font:inherit;color:var(--muted);font-weight:700}
+.opt .ob{display:flex;align-items:center;gap:10px;min-width:0}
+.opt.ok{border-color:var(--blue);background:color-mix(in srgb,var(--blue) 16%,transparent)}
+.opt.no{border-color:var(--red);background:color-mix(in srgb,var(--red) 16%,transparent)}
+.fb{margin-top:16px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;font-weight:700}
+.fb .delta{font-size:15px}
 .match{display:grid;gap:10px;grid-template-columns:repeat(4,1fr)}
 @media (max-width:600px){.match{grid-template-columns:repeat(2,1fr)}}
-.mt{min-height:96px;background:var(--surface);border:2px solid var(--line);border-radius:14px;padding:10px;font-weight:600;font-size:14px;overflow-wrap:anywhere}
-.mt.sel{border-color:var(--primary);background:color-mix(in srgb,var(--primary) 16%,var(--surface))}
-.mt.bad{border-color:var(--bad);animation:shake .3s}
+.mt{min-height:96px;background:var(--surface);border:2px solid var(--line);border-radius:10px;padding:10px;font-weight:600;font-size:14px;overflow-wrap:anywhere;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px}
+.mt[lang]{font-size:26px;font-weight:500}
+.mt.sel{border-color:var(--fg);background:var(--raise)}
+.mt.bad{border-color:var(--red);animation:shake .3s}
 .mt.gone{visibility:hidden}
 @keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
 .done{text-align:center;padding:36px 20px}
-.done .big{font-size:56px}
-.done h2{font-size:26px;margin:8px 0}
+.done h2{font-size:28px;margin:0 0 8px}
 .done .ctrl{margin-top:22px}
 
 /* editor */
-.crow{display:grid;grid-template-columns:28px 1fr 1fr auto;gap:10px;align-items:center;padding:12px 0;border-top:1px solid var(--line)}
+.crow{padding:14px 0;border-top:1px solid var(--line)}
 .crow:first-child{border-top:0}
-.crow i{font-style:normal;color:var(--muted);font-weight:700}
-@media (max-width:600px){.crow{grid-template-columns:28px 1fr auto}.crow input:nth-of-type(2){grid-column:2}}
-.err{color:var(--bad);font-weight:600}
+.crow-top{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+.crow-top b{flex:1;color:var(--muted)}
+.crow-f{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px}
+@media (max-width:600px){.crow-f{grid-template-columns:1fr}}
+.err{color:var(--red-ink);font-weight:600}
 
-details.topic{background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden}
-details.topic+details.topic{margin-top:12px}
-details.topic summary{list-style:none;display:flex;align-items:center;gap:14px;padding:14px 16px;cursor:pointer}
+/* profile */
+details.topic{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+details.topic+details.topic{margin-top:10px}
+details.topic summary{list-style:none;display:flex;align-items:center;gap:14px;padding:13px 16px;cursor:pointer}
 details.topic summary::-webkit-details-marker{display:none}
-details.topic summary::after{content:"⌄";color:var(--muted);font-size:20px;transition:transform .2s}
-details.topic[open] summary::after{transform:rotate(180deg)}
+details.topic summary::after{content:"";width:8px;height:8px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg);transition:transform .2s;flex:none;margin:0 4px 4px}
+details.topic[open] summary::after{transform:rotate(225deg);margin:4px 4px 0}
 details.topic .row{border-top:1px solid var(--line)}
-.prof{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
-.prof input{max-width:260px;font-size:20px;font-weight:800}
-.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 18px;border-radius:999px;font-weight:700;font-size:14px;z-index:50;box-shadow:var(--shadow)}
+.prof{display:flex;gap:20px;align-items:center;flex-wrap:wrap}
+.prof input[type=text]{max-width:280px;font-size:20px;font-weight:700}
+.setline{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-top:1px solid var(--line);flex-wrap:wrap}
+.setline:first-of-type{border-top:0}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 18px;border-radius:8px;font-weight:700;font-size:14px;z-index:50;max-width:calc(100vw - 32px);text-align:center}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
 <body>
-<header class="top">
-  <div class="top-in">
-    <a class="logo" href="#home" aria-label="FlashCar home">
-      <svg viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" rx="11" fill="#4a66ff"/><path d="M8 24.5v-4.2c0-1 .6-1.9 1.6-2.2l3-1 2.3-4.2c.5-.9 1.4-1.4 2.4-1.4h6.2c1 0 2 .5 2.5 1.4l2.2 4 2.4 1.1c.9.4 1.4 1.3 1.4 2.2v4.3c0 .8-.7 1.5-1.5 1.5H9.500c-.8 0-1.500-.7-1.500-1.500z" fill="#fff"/><circle cx="13.500" cy="26.500" r="3" fill="#0b1022" stroke="#fff" stroke-width="1.500"/><circle cx="26.500" cy="26.500" r="3" fill="#0b1022" stroke="#fff" stroke-width="1.500"/><path d="M21.500 13.500l-4 5h3l-1 4 4.500-5.500h-3z" fill="#ffcd1f"/></svg>
-      <span>Flash<em>Car</em></span>
-    </a>
-    <nav id="nav" aria-label="Main">
-      <a href="#home" data-n="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Home</a>
-      <a href="#materials" data-n="materials"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="14" height="14" rx="2"/><path d="M7 3h12a2 2 0 0 1 2 2v12"/></svg>Materials</a>
-      <a href="#progress" data-n="progress"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Progress</a>
-      <a href="#discover" data-n="discover"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15.500 8.500l-2 5-5 2 2-5z"/></svg>Discover</a>
-    </nav>
-    <div class="top-r">
-      <a class="btn pri sm" href="#create">+ <span class="hide-s">Create</span></a>
-      <a class="avatar" id="avatar" href="#profile" aria-label="Your profile">A</a>
-    </div>
-  </div>
-</header>
+<header class="top" id="top"></header>
 <main id="app"></main>
 
 <script>
 (function(){
 'use strict';
 
-/* ---------- data ---------- */
-var TOPICS={
-  languages:{n:'Languages',e:'🌍'},
-  science:{n:'Science',e:'🔬'},
-  math:{n:'Math',e:'📐'},
-  history:{n:'History',e:'🏛️'},
-  geography:{n:'Geography',e:'🗺️'},
-  cs:{n:'Computer science',e:'💻'},
-  prep:{n:'Test prep',e:'🎯'},
-  arts:{n:'Arts & culture',e:'🎨'},
-  other:{n:'Other',e:'📦'}
+/* ---------- interface text: [English, Russian] ---------- */
+var I={
+  nav_home:['Home','Главная'],nav_mat:['Materials','Материалы'],nav_prog:['Progress','Прогресс'],nav_disc:['Discover','Каталог'],
+  create:['Create','Создать'],profile:['Your profile','Твой профиль'],theme:['Switch theme','Сменить тему'],
+  hello:['Welcome back, {0}','С возвращением, {0}'],hello0:['Welcome to FlashCar','Добро пожаловать в FlashCar'],
+  hero_sub0:['Pick a set, flip some cards and watch your progress grow.','Выбери набор, переворачивай карточки и следи за прогрессом.'],
+  hero_sub:['You have mastered {0} of {1} cards in your materials.','Выучено {0} из {1} карточек в твоих материалах.'],
+  today:['Today','Сегодня'],goal_of:['of {0} cards','из {0} карточек'],goal_done:['Daily goal reached.','Цель на день выполнена.'],goal_left:['{0} to go for today\'s goal.','До цели на сегодня: {0}.'],
+  cont:['Continue','Продолжить'],start:['Start with a set','Начать с набора'],
+  k_mast:['Mastered','Выучено'],k_learn:['Still learning','Учу'],k_rev:['To review','Повторить'],k_new:['Not studied','Не начато'],
+  k_acc:['Accuracy this week','Точность за неделю'],k_streak:['Day streak','Дней подряд'],k_ans:['Cards answered','Всего ответов'],
+  vs_week:['{0} pts vs last week','{0} п. п. к прошлой неделе'],this_week:['{0} this week','{0} за неделю'],
+  by_subject:['Progress by subject','Прогресс по предметам'],
+  by_subject_sub:['How much of each subject you have mastered. Tap a subject to open its sets.','Сколько выучено по каждому предмету. Нажми на предмет, чтобы открыть его наборы.'],
+  no_subject:['Add a set to see your subjects here.','Добавь набор, и здесь появятся предметы.'],
+  week:['Last 7 days','Последние 7 дней'],two_weeks:['Last 14 days','Последние 14 дней'],week_sub:['Right and wrong answers each day','Верные и неверные ответы по дням'],
+  right:['Right','Верно'],wrong:['Wrong','Неверно'],table:['Show as table','Показать таблицей'],day:['Day','День'],total:['Total','Всего'],subject:['Subject','Предмет'],
+  review_h:['Cards to review','Карточки на повторение'],review_sub:['Your last answer on these was wrong.','На эти карточки последний ответ был неверным.'],
+  review_none:['Nothing to review. Cards you get wrong will show up here.','Повторять нечего. Здесь появятся карточки, в которых ты ошибся.'],review_btn:['Review','Повторить'],more:['and {0} more','и ещё {0}'],
+  your_mat:['Your materials','Твои материалы'],see_all:['See all','Все'],from_disc:['From Discover','Из каталога'],explore:['Explore topics','Все темы'],
+  empty_t:['Nothing here yet','Пока пусто'],empty_p:['Add a ready-made set or make your own.','Добавь готовый набор или создай свой.'],browse:['Browse Discover','Открыть каталог'],
+  x_of_y:['{0} of {1} mastered','{0} из {1} выучено'],
+  st_today:['Studied today','Занимался сегодня'],st_yest:['Studied yesterday','Занимался вчера'],st_days:['Studied {0} days ago','Занимался {0} дн. назад'],st_never:['Not started','Не начато'],
+  mat_sub:['Every set you have added or created, with your progress on each.','Все наборы, которые ты добавил или создал, и прогресс по каждому.'],
+  create_set:['Create a set','Создать набор'],search_mat:['Search your materials','Поиск по материалам'],all_topics:['All topics','Все темы'],
+  nomatch_t:['No sets match','Ничего не найдено'],nomatch_p:['Try another topic or search word.','Попробуй другую тему или слово.'],
+  matempty_t:['Your materials are empty','В материалах пусто'],matempty_p:['Add a set from Discover or create your own.','Добавь набор из каталога или создай свой.'],
+  disc_sub:['{0} ready-made sets across {1} topics. Add any of them to your materials in one tap.','Готовых наборов: {0}, тем: {1}. Любой набор добавляется в материалы одним нажатием.'],
+  search_disc:['Search sets, for example capitals or 你好','Поиск наборов, например столицы или 你好'],
+  open:['Open','Открыть'],add:['Add','Добавить'],added:['Added','Добавлено'],
+  none_t:['Nothing found','Ничего не найдено'],none_p:['Try a different word, or create this set yourself.','Попробуй другое слово или создай такой набор сам.'],
+  prog_sub:['Get a card right twice in a row to master it. A wrong answer sends it to review.','Ответь верно два раза подряд, и карточка выучена. Ошибка отправляет её на повторение.'],
+  by_set:['By set','По наборам'],noprog_t:['No progress yet','Прогресса пока нет'],noprog_p:['Study a set and it will show up here.','Позанимайся с набором, и он появится здесь.'],find:['Find a set','Найти набор'],
+  your_name:['Your name','Твоё имя'],name_ph:['Add your name','Напиши имя'],
+  photo_add:['Add photo','Добавить фото'],photo_change:['Change photo','Сменить фото'],photo_rm:['Remove photo','Убрать фото'],
+  by_topic:['Your materials by topic','Материалы по темам'],by_topic_sub:['Open a topic, then a set to see your progress and keep studying.','Открой тему, затем набор: там твой прогресс и режимы занятий.'],
+  settings:['Settings','Настройки'],language:['Language','Язык'],theme_l:['Theme','Тема'],dark:['Obsidian','Обсидиан'],light:['Whitestone','Белый камень'],
+  data_h:['Your data','Твои данные'],data_p:['FlashCar has no accounts or server. Your sets, pictures and progress are saved in this browser only.','В FlashCar нет аккаунтов и сервера. Наборы, картинки и прогресс хранятся только в этом браузере.'],
+  wipe:['Erase all my data','Стереть все мои данные'],wipe2:['Tap again to erase everything','Нажми ещё раз, чтобы стереть всё'],
+  by_fc:['by FlashCar','от FlashCar'],by_you:['made by you','твой набор'],
+  in_mat:['In your materials','В материалах'],add_mat:['Add to materials','Добавить в материалы'],
+  edit:['Edit','Изменить'],del:['Delete','Удалить'],del2:['Tap again to delete','Нажми ещё раз, чтобы удалить'],copy:['Copy and edit','Копировать и изменить'],
+  your_prog:['Your progress','Твой прогресс'],best:['Best match time: {0} s','Лучшее время в «Парах»: {0} с'],
+  reset:['Reset progress','Сбросить прогресс'],reset2:['Tap again to reset','Нажми ещё раз для сброса'],
+  m_flash:['Flashcards','Карточки'],m_flash_s:['Flip and sort what you know','Переворачивай и отмечай, что знаешь'],
+  m_learn:['Learn','Заучивание'],m_learn_s:['Multiple-choice questions','Вопросы с вариантами ответа'],
+  m_match:['Match','Пары'],m_match_s:['Pair terms against the clock','Соединяй пары на время'],
+  terms_h:['Terms in this set','Термины в наборе'],p_m:['Mastered','Выучено'],p_l:['Learning','Учу'],p_r:['Review','Повторить'],p_n:['New','Новая'],
+  nf_t:['Set not found','Набор не найден'],nf_p:['It may have been deleted.','Возможно, его удалили.'],back_mat:['Back to materials','К материалам'],
+  back:['Back','Назад'],term:['Term','Термин'],defn:['Definition','Определение'],still:['Still learning','Ещё учу'],know:['Know it','Знаю'],
+  flash_hint:['Tap the card or press Space to flip. Left arrow: still learning. Right arrow: know it.','Нажми на карточку или пробел, чтобы перевернуть. Стрелка влево: ещё учу. Стрелка вправо: знаю.'],
+  front_t:['Term first','Сначала термин'],front_d:['Definition first','Сначала определение'],
+  fl_done:['You went through every card','Все карточки пройдены'],fl_done_s:['Knew {0}, still learning {1}.','Знаю: {0}, ещё учу: {1}.'],
+  choose:['Choose the matching definition','Выбери подходящее определение'],correct:['Correct','Верно'],notq:['Not quite. The right answer is highlighted.','Не совсем. Правильный ответ выделен.'],
+  cont_b:['Continue','Дальше'],learn_hint:['Press 1 to {0} to answer, Enter to continue.','Клавиши от 1 до {0} выбирают ответ, Enter ведёт дальше.'],
+  round_done:['Round finished','Раунд окончен'],perfect:['Perfect round','Раунд без ошибок'],round_s:['{0} right, {1} to review.','Верно: {0}, на повторение: {1}.'],
+  match_done:['Matched in {0} s','Готово за {0} с'],match_best:['Your best is {0} s. Try to beat it.','Твой рекорд: {0} с. Попробуй побить.'],match_new:['That is your best time so far.','Это твой лучший результат.'],
+  match_hint:['Tap a term, then its definition.','Нажми на термин, затем на его определение.'],again:['Go again','Ещё раз'],back_set:['Back to set','К набору'],pct_set:['{0}% of this set mastered','Выучено {0}% набора'],
+  ed_new:['Create a new set','Новый набор'],ed_edit:['Edit set','Изменить набор'],save:['Save set','Сохранить набор'],title:['Title','Название'],title_ph:['For example: Biology, chapter 4','Например: Биология, глава 4'],
+  topic:['Topic','Тема'],desc:['Description (optional)','Описание (необязательно)'],cards_h:['Cards','Карточки'],term_ph:['Term','Термин'],def_ph:['Definition','Определение'],hint_ph:['Reading or hint (optional)','Чтение или подсказка (необязательно)'],
+  pic_add:['Add picture','Добавить картинку'],pic_change:['Change picture','Сменить картинку'],pic_rm:['Remove picture','Убрать картинку'],add_card:['Add card','Добавить карточку'],rm_card:['Remove card','Удалить карточку'],cancel:['Cancel','Отмена'],
+  err_title:['Give your set a title.','Дай набору название.'],err_cards:['Add at least two cards. Each needs a term and a definition or picture.','Добавь хотя бы две карточки. Каждой нужен термин и определение или картинка.'],copy_of:['{0} (copy)','{0} (копия)'],
+  t_added:['Added to your materials','Добавлено в материалы'],t_removed:['Removed from your materials','Убрано из материалов'],t_saved:['Set saved','Набор сохранён'],t_deleted:['Set deleted','Набор удалён'],
+  t_reset:['Progress reset','Прогресс сброшен'],t_erased:['Everything erased','Всё стёрто'],t_photo:['Photo updated','Фото обновлено'],
+  t_full:['Browser storage is full. Remove some pictures and try again.','Память браузера заполнена. Убери несколько картинок и попробуй снова.'],t_badimg:['That file could not be read as a picture.','Не удалось прочитать этот файл как картинку.']
 };
-function D(id,title,topic,desc,pairs){
-  return {id:id,title:title,topic:topic,desc:desc,cards:pairs.map(function(p,i){return {id:i,t:p[0],d:p[1]};})};
-}
+var PL={
+  cards:[['card','cards'],['карточка','карточки','карточек']],
+  sets:[['set','sets'],['набор','набора','наборов']],
+  streak:[['day streak','day streak'],['день подряд','дня подряд','дней подряд']]
+};
+
+/* ---------- topics and ready-made sets ---------- */
+var TOPICS={
+  chinese:{n:['Chinese','Китайский'],g:'中'},
+  languages:{n:['Languages','Языки'],i:'M4 5h16v11H10l-5 4v-4H4z'},
+  science:{n:['Science','Естественные науки'],i:'M9 3h6M10 3v6L4.5 19a1.3 1.3 0 0 0 1.2 2h12.6a1.3 1.3 0 0 0 1.2-2L14 9V3'},
+  math:{n:['Math','Математика'],i:'M5 7h6M8 4v6M14 7h6M5.5 14.5l5 5M10.5 14.5l-5 5M14 15h6M14 19h6'},
+  history:{n:['History','История'],i:'M3 21h18M5 21V10M9.5 21V10M14.5 21V10M19 21V10M3 10l9-6 9 6z'},
+  geography:{n:['Geography','География'],i:'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18'},
+  cs:{n:['Computer science','Информатика'],i:'M8 7l-5 5 5 5M16 7l5 5-5 5M14 4l-4 16'},
+  prep:{n:['Test prep','Подготовка к экзаменам'],i:'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z'},
+  arts:{n:['Arts and culture','Искусство и культура'],i:'M9 18V5l11-2v13M9 18a3 3 0 1 1-6 0 3 3 0 0 1 6 0zM20 16a3 3 0 1 1-6 0 3 3 0 0 1 6 0z'},
+  other:{n:['Other','Другое'],i:'M3 8l9-5 9 5v8l-9 5-9-5zM3 8l9 5 9-5M12 13v8'}
+};
+function mk(id,topic,title,desc,rows){return {id:id,topic:topic,title:title,desc:desc,cards:rows.map(function(r,i){return {id:i,t:r[0],d:r[1]};})};}
+/* Chinese rows: [characters, pinyin, English, Russian] */
+function zh(id,title,desc,rows){return {id:id,topic:'chinese',zh:true,title:title,desc:desc,cards:rows.map(function(r,i){return {id:i,t:r[0],p:r[1],d:[r[2],r[3]]};})};}
+var NPCR=' New Practical Chinese Reader 1.';
 var DISCOVER=[
-  D('ielts','IELTS academic vocabulary','languages','Ten words that lift an essay from band 6 to band 7.',[['ubiquitous','Found everywhere'],['mitigate','To make something less severe'],['ambiguous','Open to more than one meaning'],['coherent','Logical and consistent'],['inevitable','Certain to happen'],['scrutinize','To examine very closely'],['plausible','Seeming reasonable or likely'],['advocate','To publicly support an idea'],['deteriorate','To become steadily worse'],['feasible','Possible to do']]),
-  D('kazakh','Kazakh everyday phrases','languages','Greetings and small words you will use every day.',[['Сәлем','Hello'],['Рақмет','Thank you'],['Қайырлы таң','Good morning'],['Сау бол','Goodbye'],['Иә','Yes'],['Жоқ','No'],['Кешіріңіз','Excuse me / sorry'],['Қалайсың?','How are you?'],['Дос','Friend'],['Кітап','Book']]),
-  D('spanish','Spanish basics','languages','First words for travel and small talk.',[['hola','hello'],['gracias','thank you'],['por favor','please'],['¿Cómo estás?','How are you?'],['buenos días','good morning'],['adiós','goodbye'],['lo siento',"I'm sorry"],['agua','water'],['amigo','friend'],['escuela','school']]),
-  D('french','French basics','languages','Polite essentials for your first conversation.',[['bonjour','hello'],['merci','thank you'],["s'il vous plaît",'please'],['au revoir','goodbye'],['oui','yes'],['non','no'],['excusez-moi','excuse me'],["l'eau",'water'],['le livre','the book'],["l'école",'the school']]),
-  D('cell','Parts of a cell','science','What each organelle does, in one line.',[['Nucleus','Holds the DNA and controls the cell'],['Mitochondria','Release energy through respiration'],['Ribosome','Builds proteins'],['Cell membrane','Controls what enters and leaves the cell'],['Chloroplast','Where photosynthesis happens'],['Cell wall','Rigid outer layer that supports plant cells'],['Vacuole','Stores water and nutrients'],['Cytoplasm','Jelly-like fluid where reactions take place'],['Golgi apparatus','Packages and ships proteins'],['Lysosome','Breaks down waste']]),
-  D('elements','Chemical symbols','science','Match the symbol to the element.',[['H','Hydrogen'],['He','Helium'],['C','Carbon'],['N','Nitrogen'],['O','Oxygen'],['Na','Sodium'],['K','Potassium'],['Fe','Iron'],['Au','Gold'],['Ag','Silver']]),
-  D('physics','Physics formulas','science','The formulas every school exam asks for.',[['Speed','distance ÷ time'],["Newton's second law",'F = m × a'],['Density','mass ÷ volume'],['Kinetic energy','½ × m × v²'],["Ohm's law",'V = I × R'],['Weight','m × g'],['Pressure','force ÷ area'],['Work','force × distance'],['Power','work ÷ time'],['Momentum','m × v']]),
-  D('planets','The solar system','science','One fact to remember each planet by.',[['Mercury','Closest planet to the Sun'],['Venus','Hottest planet'],['Earth','Only known planet with life'],['Mars','The red planet'],['Jupiter','Largest planet'],['Saturn','Famous for its bright rings'],['Uranus','Spins on its side'],['Neptune','Farthest planet from the Sun']]),
-  D('geometry','Geometry formulas','math','Areas, volumes and one famous theorem.',[['Area of a circle','π r²'],['Circumference of a circle','2 π r'],['Area of a triangle','½ × base × height'],['Pythagorean theorem','a² + b² = c²'],['Area of a rectangle','length × width'],['Volume of a cube','side³'],['Angles in a triangle add up to','180°'],['Volume of a cylinder','π r² h'],['Area of a trapezoid','½ × (a + b) × h'],['Volume of a sphere','⁴⁄₃ π r³']]),
-  D('algebra','Algebra key terms','math','The words your teacher keeps using.',[['Variable','A letter that stands for an unknown number'],['Coefficient','The number multiplied by a variable'],['Constant','A value that does not change'],['Equation','A statement that two expressions are equal'],['Expression','Numbers and variables joined by operations, with no equals sign'],['Quadratic formula','x = (−b ± √(b² − 4ac)) ÷ 2a'],['Slope','Rise ÷ run'],['Y-intercept','Where a line crosses the y-axis'],['Polynomial','A sum of terms with whole-number powers'],['Factor','A number or expression that divides another exactly']]),
-  D('dates','World history dates','history','Ten years worth knowing by heart.',[['Magna Carta is sealed','1215'],['Columbus reaches the Americas','1492'],['French Revolution begins','1789'],['World War I begins','1914'],['World War II begins','1939'],['World War II ends','1945'],['First humans land on the Moon','1969'],['Berlin Wall falls','1989'],['Soviet Union dissolves','1991'],['First modern Olympic Games','1896']]),
-  D('kzhistory','History of Kazakhstan','history','People, places and dates from the steppe.',[['Kazakh Khanate is founded','1465'],['Kazakhstan declares independence','16 December 1991'],['Abai Qunanbaiuly','Poet and thinker, founder of written Kazakh literature'],['Al-Farabi','Philosopher born in Otrar, called the "Second Teacher"'],['Baikonur',"The world's first spaceport"],['Tenge is introduced','1993'],['The Golden Man','Saka warrior found in the Issyk burial mound'],['Kerei and Zhanibek','Founders of the Kazakh Khanate'],['Capital moves from Almaty','1997']]),
-  D('capitals','World capitals','geography','Country on the front, capital on the back.',[['Kazakhstan','Astana'],['Japan','Tokyo'],['Canada','Ottawa'],['Australia','Canberra'],['Brazil','Brasília'],['Türkiye','Ankara'],['Egypt','Cairo'],['Germany','Berlin'],['South Korea','Seoul'],['Argentina','Buenos Aires']]),
-  D('records','Geography record holders','geography','The biggest, deepest and highest on Earth.',[['Largest ocean','Pacific Ocean'],['Highest mountain','Mount Everest'],['Largest hot desert','Sahara'],['Largest country','Russia'],['Deepest lake','Lake Baikal'],['Largest landlocked country','Kazakhstan'],['Smallest country','Vatican City'],['Largest rainforest','Amazon'],['Highest waterfall','Angel Falls'],['Largest continent','Asia']]),
-  D('coding','Programming basics','cs','Ten ideas behind every program.',[['Algorithm','Step-by-step instructions for solving a problem'],['Variable','A named place to store a value'],['Loop','Code that repeats'],['Function','A reusable block of code with a name'],['Bug','A mistake that makes a program behave wrongly'],['Array','An ordered list of values'],['Boolean','A value that is either true or false'],['Compiler','Turns source code into machine code'],['API','A set of rules that lets programs talk to each other'],['Binary','Number system that uses only 0 and 1']]),
-  D('web','How the web works','cs','What happens between typing an address and seeing a page.',[['HTML','Language that gives a web page its structure'],['CSS','Language that styles a web page'],['JavaScript','Language that makes a web page interactive'],['URL','The address of a page'],['HTTP','Protocol browsers and servers use to exchange pages'],['Server','Computer that stores a site and sends it to visitors'],['Browser','App that fetches and displays web pages'],['DNS','Turns a site name into an IP address']]),
-  D('sat','SAT power words','prep','Adjectives that show up again and again.',[['benevolent','Kind and generous'],['candid','Honest and direct'],['diligent','Hard-working and careful'],['eloquent','Fluent and persuasive in speech'],['frugal','Careful with money'],['meticulous','Very attentive to detail'],['pragmatic','Practical rather than idealistic'],['resilient','Able to recover quickly'],['skeptical','Doubtful, not easily convinced'],['tenacious','Persistent, not giving up']]),
-  D('devices','Literary devices','prep','Spot them in a text, use them in an essay.',[['Metaphor','Saying one thing is another'],['Simile','Comparing with "like" or "as"'],['Alliteration','Repeating the same starting sound'],['Hyperbole','Deliberate exaggeration'],['Irony','Meaning the opposite of what is said'],['Personification','Giving human traits to non-human things'],['Foreshadowing','Hinting at what comes later'],['Onomatopoeia','A word that sounds like what it names']]),
-  D('paintings','Famous paintings','arts','Who painted what.',[['Mona Lisa','Leonardo da Vinci'],['The Starry Night','Vincent van Gogh'],['The Scream','Edvard Munch'],['Guernica','Pablo Picasso'],['Girl with a Pearl Earring','Johannes Vermeer'],['The Persistence of Memory','Salvador Dalí'],['The Birth of Venus','Sandro Botticelli'],['The Night Watch','Rembrandt']]),
-  D('music','Music terms','arts','Italian words printed on every score.',[['Tempo','The speed of the music'],['Forte','Loud'],['Piano','Soft'],['Crescendo','Gradually getting louder'],['Allegro','Fast and lively'],['Adagio','Slow'],['Chord','Three or more notes played together'],['Octave','The distance between a note and the next one with the same name']])
+  zh('zh1',['Chinese lesson 1: 你好','Китайский, урок 1: 你好'],['Hello. New words from lesson 1 of'+NPCR,'Приветствие. Новые слова 1-го урока'+NPCR],[
+    ['你好','nǐ hǎo','hello','здравствуй; привет'],['你','nǐ','you','ты'],['好','hǎo','good; well','хороший; хорошо'],['吗','ma','question particle (yes or no questions)','вопросительная частица (общий вопрос)'],
+    ['我','wǒ','I; me','я'],['很','hěn','very','очень'],['呢','ne','particle for "and you?" questions','частица встречного вопроса («а ты?»)'],['也','yě','also; too','тоже; также'],
+    ['陆雨平','Lù Yǔpíng','Lu Yuping (a name)','Лу Юйпин (имя)'],['力波','Lìbō','Libo (a name)','Либо (имя)'],['林娜','Lín Nà','Lin Na (a name)','Линь На (имя)']]),
+  zh('zh2',['Chinese lesson 2: 你忙吗','Китайский, урок 2: 你忙吗'],['Are you busy? New words from lesson 2 of'+NPCR,'Ты занят? Новые слова 2-го урока'+NPCR],[
+    ['忙','máng','busy','занятой; занят'],['吗','ma','question particle (yes or no questions)','вопросительная частица (общий вопрос)'],['爸爸','bàba','dad; father','папа; отец'],['妈妈','māma','mom; mother','мама; мать'],
+    ['他们','tāmen','they; them','они'],['他','tā','he; him','он'],['们','men','plural suffix for people','суффикс множественного числа (о людях)'],['都','dōu','all; both','все; оба'],
+    ['不','bù','not; no','не; нет'],['男','nán','male','мужской; мужчина'],['朋友','péngyou','friend','друг'],['呢','ne','particle for "and you?" questions','частица встречного вопроса («а ты?»)'],
+    ['哥哥','gēge','older brother','старший брат'],['要','yào','to want','хотеть'],['咖啡','kāfēi','coffee','кофе'],['弟弟','dìdi','younger brother','младший брат'],
+    ['我们','wǒmen','we; us','мы'],['喝','hē','to drink','пить'],['丁','Dīng','Ding (a surname)','Дин (фамилия)']]),
+  zh('zh4',['Chinese lesson 4: 认识你很高兴','Китайский, урок 4: 认识你很高兴'],['Nice to meet you. New words from lesson 4 of'+NPCR,'Очень рад знакомству. Новые слова 4-го урока'+NPCR],[
+    ['认识','rènshi','to know (a person)','знать (кого-то); быть знакомым'],['高兴','gāoxìng','glad; happy','рад; радостный'],['可以','kěyǐ','may; can','можно; мочь'],['进来','jìnlai','to come in','входить (сюда)'],
+    ['进','jìn','to enter','входить'],['来','lái','to come','приходить; приезжать'],['请','qǐng','please','пожалуйста; просить'],['您','nín','you (polite)','Вы (вежливо)'],
+    ['朋友','péngyou','friend','друг'],['记者','jìzhě','journalist','журналист'],['请问','qǐngwèn','may I ask','скажите, пожалуйста'],['问','wèn','to ask','спрашивать'],
+    ['贵姓','guìxìng','your surname (polite)','ваша фамилия (вежливо)'],['姓','xìng','surname; to be surnamed','фамилия; носить фамилию'],['叫','jiào','to be called','зваться; называться'],['先生','xiānsheng','Mr.; sir','господин'],
+    ['杨','Yáng','Yang (a surname)','Ян (фамилия)'],['语言','yǔyán','language','язык (речь)'],['学院','xuéyuàn','institute; college','институт'],['的','de','possessive particle','притяжательная частица'],
+    ['学生','xuésheng','student','студент; ученик'],['什么','shénme','what','что; какой'],['学习','xuéxí','to study; to learn','учиться; изучать'],['汉语','Hànyǔ','Chinese (language)','китайский язык'],
+    ['英国','Yīngguó','the United Kingdom','Великобритания'],['马大为','Mǎ Dàwéi','Ma Dawei (a name)','Ма Давэй (имя)'],['加拿大','Jiānádà','Canada','Канада'],['美国','Měiguó','the United States','США']]),
+  zh('zh5',['Chinese lesson 5: 餐厅在哪儿','Китайский, урок 5: 餐厅在哪儿'],['Where is the dining hall? New words from lesson 5 of'+NPCR,'Где столовая? Новые слова 5-го урока'+NPCR],[
+    ['餐厅','cāntīng','dining hall; restaurant','столовая; ресторан'],['在','zài','to be at; in','находиться (в, на)'],['哪儿','nǎr','where','где; куда'],['请问','qǐngwèn','may I ask','скажите, пожалуйста'],
+    ['问','wèn','to ask','спрашивать'],['这','zhè','this','этот; это'],['宿舍','sùshè','dormitory','общежитие'],['女','nǚ','female','женский; женщина'],
+    ['学生','xuésheng','student','студент; ученик'],['进','jìn','to enter','входить'],['坐','zuò','to sit','сидеть; садиться'],['谢谢','xièxie','thank you','спасибо'],
+    ['对不起','duìbuqǐ','sorry','извините; простите'],['我','wǒ','I; me','я'],['知道','zhīdào','to know (a fact)','знать'],['没关系','méi guānxi','never mind; it does not matter','ничего страшного'],
+    ['好','hǎo','good; well','хороший; хорошо'],['再见','zàijiàn','goodbye','до свидания'],['再','zài','again','снова; ещё раз'],['王小云','Wáng Xiǎoyún','Wang Xiaoyun (a name)','Ван Сяоюнь (имя)'],
+    ['小姐','xiǎojiě','Miss; young lady','девушка; госпожа'],['二','èr','two','два'],['层','céng','floor; storey','этаж'],['零','líng','zero','ноль'],
+    ['四','sì','four','четыре'],['号','hào','number (of a room)','номер'],['不用','búyòng','no need','не нужно; не стоит'],['这儿','zhèr','here','здесь'],
+    ['晚','wǎn','late','поздно; поздний'],['了','le','particle: completed action or change','частица: завершённость или изменение'],['宋华','Sòng Huá','Song Hua (a name)','Сун Хуа (имя)']]),
+  zh('zhread',['Chinese test practice: read the characters','Китайский, контрольная: прочитай иероглифы'],['Characters you may be asked to write in pinyin on a level A1 test.','Иероглифы, пиньинь которых просят написать на контрольной уровня A1.'],[
+    ['一','yī','one','один'],['五','wǔ','five','пять'],['鱼','yú','fish','рыба'],['八','bā','eight','восемь'],['大','dà','big','большой'],['不','bù','not; no','не; нет'],
+    ['女','nǚ','female','женский; женщина'],['口','kǒu','mouth','рот'],['白','bái','white','белый'],['黑','hēi','black','чёрный'],['马','mǎ','horse','лошадь'],['你','nǐ','you','ты'],
+    ['妈妈','māma','mom; mother','мама; мать'],['我','wǒ','I; me','я'],['老师','lǎoshī','teacher','учитель; преподаватель'],['认识','rènshi','to know (a person)','знать (кого-то); быть знакомым'],
+    ['留学生','liúxuéshēng','international student','иностранный студент'],['哥哥','gēge','older brother','старший брат']]),
+  zh('zhwrite',['Chinese test practice: write the characters','Китайский, контрольная: напиши иероглифы'],['Words you may be asked to write in characters, plus vocabulary from the test tasks.','Слова, которые просят записать иероглифами, и лексика из заданий контрольной.'],[
+    ['美好','měihǎo','fine; wonderful','прекрасный'],['你好','nǐ hǎo','hello','здравствуй; привет'],['五百','wǔbǎi','five hundred','пятьсот'],['北海','Běihǎi','Beihai (a park in Beijing)','Бэйхай (парк в Пекине)'],
+    ['给','gěi','to give','давать'],['语法','yǔfǎ','grammar','грамматика'],['可以','kěyǐ','may; can','можно; мочь'],['辅导','fǔdǎo','to tutor; to coach','помогать в учёбе; репетиторство'],
+    ['爸爸','bàba','dad; father','папа; отец'],['记者','jìzhě','journalist','журналист'],['奶奶','nǎinai','grandmother (father\'s mother)','бабушка (по отцу)'],['教师','jiàoshī','teacher (profession)','преподаватель (профессия)'],
+    ['当然','dāngrán','of course','конечно'],['可爱','kě\'ài','cute; lovely','милый'],['多少','duōshao','how many; how much','сколько'],['喜欢','xǐhuan','to like','нравиться; любить'],
+    ['今天','jīntiān','today','сегодня'],['生日','shēngrì','birthday','день рождения'],['画展','huàzhǎn','art exhibition','выставка картин'],['电梯','diàntī','lift; elevator','лифт'],
+    ['乱七八糟','luànqībāzāo','a complete mess','беспорядок; кавардак'],['铅笔','qiānbǐ','pencil','карандаш'],['安全','ānquán','safe; safety','безопасный; безопасность'],['篮球','lánqiú','basketball','баскетбол'],
+    ['冰箱','bīngxiāng','fridge','холодильник'],['眼镜','yǎnjìng','glasses','очки']]),
+  mk('ielts','languages',['IELTS academic vocabulary','Академическая лексика для IELTS'],['Ten words that lift an essay from band 6 to band 7.','Десять слов, с которыми эссе звучит на балл выше.'],[
+    ['ubiquitous',['Found everywhere','Вездесущий, встречается повсюду']],['mitigate',['To make something less severe','Смягчать, уменьшать тяжесть']],['ambiguous',['Open to more than one meaning','Двусмысленный, неоднозначный']],
+    ['coherent',['Logical and consistent','Связный, логичный']],['inevitable',['Certain to happen','Неизбежный']],['scrutinize',['To examine very closely','Тщательно изучать']],['plausible',['Seeming reasonable or likely','Правдоподобный']],
+    ['advocate',['To publicly support an idea','Публично поддерживать, отстаивать']],['deteriorate',['To become steadily worse','Ухудшаться']],['feasible',['Possible to do','Осуществимый, выполнимый']]]),
+  mk('kazakh','languages',['Kazakh everyday phrases','Казахский: фразы на каждый день'],['Greetings and small words you will use every day.','Приветствия и короткие слова, которые нужны каждый день.'],[
+    ['Сәлем',['Hello','Привет']],['Рақмет',['Thank you','Спасибо']],['Қайырлы таң',['Good morning','Доброе утро']],['Сау бол',['Goodbye','Пока, до свидания']],['Иә',['Yes','Да']],['Жоқ',['No','Нет']],
+    ['Кешіріңіз',['Excuse me, sorry','Извините']],['Қалайсың?',['How are you?','Как дела?']],['Дос',['Friend','Друг']],['Кітап',['Book','Книга']]]),
+  mk('spanish','languages',['Spanish basics','Испанский: первые слова'],['First words for travel and small talk.','Первые слова для поездок и простого разговора.'],[
+    ['hola',['hello','привет']],['gracias',['thank you','спасибо']],['por favor',['please','пожалуйста']],['¿Cómo estás?',['How are you?','Как дела?']],['buenos días',['good morning','доброе утро']],
+    ['adiós',['goodbye','до свидания']],['lo siento',['I\'m sorry','мне жаль, извини']],['agua',['water','вода']],['amigo',['friend','друг']],['escuela',['school','школа']]]),
+  mk('french','languages',['French basics','Французский: первые слова'],['Polite essentials for your first conversation.','Вежливые слова для первого разговора.'],[
+    ['bonjour',['hello','здравствуйте']],['merci',['thank you','спасибо']],['s\'il vous plaît',['please','пожалуйста']],['au revoir',['goodbye','до свидания']],['oui',['yes','да']],['non',['no','нет']],
+    ['excusez-moi',['excuse me','извините']],['l\'eau',['water','вода']],['le livre',['the book','книга']],['l\'école',['the school','школа']]]),
+  mk('cell','science',['Parts of a cell','Строение клетки'],['What each organelle does, in one line.','Что делает каждая органелла, в одну строку.'],[
+    [['Nucleus','Ядро'],['Holds the DNA and controls the cell','Хранит ДНК и управляет клеткой']],[['Mitochondria','Митохондрии'],['Release energy through respiration','Вырабатывают энергию при дыхании']],
+    [['Ribosome','Рибосома'],['Builds proteins','Синтезирует белки']],[['Cell membrane','Клеточная мембрана'],['Controls what enters and leaves the cell','Регулирует, что входит в клетку и выходит из неё']],
+    [['Chloroplast','Хлоропласт'],['Where photosynthesis happens','Здесь идёт фотосинтез']],[['Cell wall','Клеточная стенка'],['Rigid outer layer that supports plant cells','Жёсткая оболочка, опора растительной клетки']],
+    [['Vacuole','Вакуоль'],['Stores water and nutrients','Хранит воду и питательные вещества']],[['Cytoplasm','Цитоплазма'],['Jelly-like fluid where reactions take place','Гелеобразная среда, где идут реакции']],
+    [['Golgi apparatus','Аппарат Гольджи'],['Packages and ships proteins','Упаковывает и отправляет белки']],[['Lysosome','Лизосома'],['Breaks down waste','Расщепляет отходы']]]),
+  mk('elements','science',['Chemical symbols','Химические символы'],['Match the symbol to the element.','Соедини символ с элементом.'],[
+    ['H',['Hydrogen','Водород']],['He',['Helium','Гелий']],['C',['Carbon','Углерод']],['N',['Nitrogen','Азот']],['O',['Oxygen','Кислород']],['Na',['Sodium','Натрий']],['K',['Potassium','Калий']],['Fe',['Iron','Железо']],['Au',['Gold','Золото']],['Ag',['Silver','Серебро']]]),
+  mk('physics','science',['Physics formulas','Формулы по физике'],['The formulas every school exam asks for.','Формулы, которые спрашивают на каждом школьном экзамене.'],[
+    [['Speed','Скорость'],['distance ÷ time','расстояние ÷ время']],[['Newton\'s second law','Второй закон Ньютона'],'F = m × a'],[['Density','Плотность'],['mass ÷ volume','масса ÷ объём']],
+    [['Kinetic energy','Кинетическая энергия'],'½ × m × v²'],[['Ohm\'s law','Закон Ома'],['V = I × R','U = I × R']],[['Weight','Сила тяжести'],'m × g'],[['Pressure','Давление'],['force ÷ area','сила ÷ площадь']],
+    [['Work','Работа'],['force × distance','сила × перемещение']],[['Power','Мощность'],['work ÷ time','работа ÷ время']],[['Momentum','Импульс'],'m × v']]),
+  mk('planets','science',['The solar system','Солнечная система'],['One fact to remember each planet by.','По одному факту, чтобы запомнить каждую планету.'],[
+    [['Mercury','Меркурий'],['Closest planet to the Sun','Ближайшая к Солнцу планета']],[['Venus','Венера'],['Hottest planet','Самая горячая планета']],[['Earth','Земля'],['Only known planet with life','Единственная известная планета с жизнью']],
+    [['Mars','Марс'],['The red planet','Красная планета']],[['Jupiter','Юпитер'],['Largest planet','Самая большая планета']],[['Saturn','Сатурн'],['Famous for its bright rings','Известен яркими кольцами']],
+    [['Uranus','Уран'],['Spins on its side','Вращается «лёжа на боку»']],[['Neptune','Нептун'],['Farthest planet from the Sun','Самая далёкая от Солнца планета']]]),
+  mk('geometry','math',['Geometry formulas','Формулы по геометрии'],['Areas, volumes and one famous theorem.','Площади, объёмы и одна знаменитая теорема.'],[
+    [['Area of a circle','Площадь круга'],'π r²'],[['Circumference of a circle','Длина окружности'],'2 π r'],[['Area of a triangle','Площадь треугольника'],['½ × base × height','½ × основание × высота']],
+    [['Pythagorean theorem','Теорема Пифагора'],'a² + b² = c²'],[['Area of a rectangle','Площадь прямоугольника'],['length × width','длина × ширина']],[['Volume of a cube','Объём куба'],['side³','ребро³']],
+    [['Angles in a triangle add up to','Сумма углов треугольника'],'180°'],[['Volume of a cylinder','Объём цилиндра'],'π r² h'],[['Area of a trapezoid','Площадь трапеции'],'½ × (a + b) × h'],[['Volume of a sphere','Объём шара'],'⁴⁄₃ π r³']]),
+  mk('algebra','math',['Algebra key terms','Алгебра: главные термины'],['The words your teacher keeps using.','Слова, которые учитель повторяет на каждом уроке.'],[
+    [['Variable','Переменная'],['A letter that stands for an unknown number','Буква, обозначающая неизвестное число']],[['Coefficient','Коэффициент'],['The number multiplied by a variable','Число, на которое умножается переменная']],
+    [['Constant','Константа'],['A value that does not change','Величина, которая не меняется']],[['Equation','Уравнение'],['A statement that two expressions are equal','Равенство двух выражений с неизвестным']],
+    [['Expression','Выражение'],['Numbers and variables joined by operations, with no equals sign','Числа и переменные, соединённые действиями, без знака равенства']],
+    [['Quadratic formula','Формула корней квадратного уравнения'],'x = (−b ± √(b² − 4ac)) ÷ 2a'],[['Slope','Угловой коэффициент'],['Rise ÷ run','Изменение y ÷ изменение x']],
+    [['Y-intercept','Пересечение с осью y'],['Where a line crosses the y-axis','Точка, где прямая пересекает ось y']],[['Polynomial','Многочлен'],['A sum of terms with whole-number powers','Сумма одночленов с целыми неотрицательными степенями']],
+    [['Factor','Множитель'],['A number or expression that divides another exactly','Число или выражение, на которое другое делится без остатка']]]),
+  mk('dates','history',['World history dates','Даты всемирной истории'],['Ten years worth knowing by heart.','Десять дат, которые стоит знать наизусть.'],[
+    [['Magna Carta is sealed','Подписана Великая хартия вольностей'],'1215'],[['Columbus reaches the Americas','Колумб достигает Америки'],'1492'],[['French Revolution begins','Начало Французской революции'],'1789'],
+    [['World War I begins','Начало Первой мировой войны'],'1914'],[['World War II begins','Начало Второй мировой войны'],'1939'],[['World War II ends','Конец Второй мировой войны'],'1945'],
+    [['First humans land on the Moon','Первая высадка людей на Луну'],'1969'],[['Berlin Wall falls','Падение Берлинской стены'],'1989'],[['Soviet Union dissolves','Распад СССР'],'1991'],[['First modern Olympic Games','Первые современные Олимпийские игры'],'1896']]),
+  mk('kzhistory','history',['History of Kazakhstan','История Казахстана'],['People, places and dates from the steppe.','Люди, места и даты Великой степи.'],[
+    [['Kazakh Khanate is founded','Основание Казахского ханства'],'1465'],[['Kazakhstan declares independence','Казахстан провозглашает независимость'],['16 December 1991','16 декабря 1991 года']],
+    [['Abai Qunanbaiuly','Абай Кунанбаев'],['Poet and thinker, founder of written Kazakh literature','Поэт и мыслитель, основоположник казахской письменной литературы']],
+    [['Al-Farabi','Аль-Фараби'],['Philosopher born in Otrar, called the "Second Teacher"','Философ родом из Отрара, «Второй учитель»']],[['Baikonur','Байконур'],['The world\'s first spaceport','Первый в мире космодром']],
+    [['Tenge is introduced','Введение тенге'],'1993'],[['The Golden Man','Золотой человек'],['Saka warrior found in the Issyk burial mound','Сакский воин, найденный в кургане Иссык']],
+    [['Kerei and Zhanibek','Керей и Жанибек'],['Founders of the Kazakh Khanate','Основатели Казахского ханства']],[['Capital moves from Almaty','Перенос столицы из Алматы'],'1997']]),
+  mk('capitals','geography',['World capitals','Столицы мира'],['Country on the front, capital on the back.','На лицевой стороне страна, на обороте столица.'],[
+    [['Kazakhstan','Казахстан'],['Astana','Астана']],[['Japan','Япония'],['Tokyo','Токио']],[['Canada','Канада'],['Ottawa','Оттава']],[['Australia','Австралия'],['Canberra','Канберра']],[['Brazil','Бразилия'],['Brasília','Бразилиа']],
+    [['Türkiye','Турция'],['Ankara','Анкара']],[['Egypt','Египет'],['Cairo','Каир']],[['Germany','Германия'],['Berlin','Берлин']],[['South Korea','Южная Корея'],['Seoul','Сеул']],[['Argentina','Аргентина'],['Buenos Aires','Буэнос-Айрес']]]),
+  mk('records','geography',['Geography record holders','Географические рекорды'],['The biggest, deepest and highest on Earth.','Самое большое, глубокое и высокое на Земле.'],[
+    [['Largest ocean','Самый большой океан'],['Pacific Ocean','Тихий океан']],[['Highest mountain','Самая высокая гора'],['Mount Everest','Эверест']],[['Largest hot desert','Самая большая жаркая пустыня'],['Sahara','Сахара']],
+    [['Largest country','Самая большая страна'],['Russia','Россия']],[['Deepest lake','Самое глубокое озеро'],['Lake Baikal','Байкал']],[['Largest landlocked country','Самая большая страна без выхода к морю'],['Kazakhstan','Казахстан']],
+    [['Smallest country','Самая маленькая страна'],['Vatican City','Ватикан']],[['Largest rainforest','Самый большой тропический лес'],['Amazon','Амазония']],[['Highest waterfall','Самый высокий водопад'],['Angel Falls','Анхель']],
+    [['Largest continent','Самая большая часть света'],['Asia','Азия']]]),
+  mk('coding','cs',['Programming basics','Основы программирования'],['Ten ideas behind every program.','Десять понятий, на которых держится любая программа.'],[
+    [['Algorithm','Алгоритм'],['Step-by-step instructions for solving a problem','Пошаговая инструкция для решения задачи']],[['Variable','Переменная'],['A named place to store a value','Именованное место для хранения значения']],
+    [['Loop','Цикл'],['Code that repeats','Код, который повторяется']],[['Function','Функция'],['A reusable block of code with a name','Именованный блок кода, который можно вызывать много раз']],
+    [['Bug','Баг'],['A mistake that makes a program behave wrongly','Ошибка, из-за которой программа работает неправильно']],[['Array','Массив'],['An ordered list of values','Упорядоченный список значений']],
+    [['Boolean','Булево значение'],['A value that is either true or false','Значение «истина» или «ложь»']],[['Compiler','Компилятор'],['Turns source code into machine code','Переводит исходный код в машинный']],
+    ['API',['A set of rules that lets programs talk to each other','Набор правил, по которым программы общаются друг с другом']],[['Binary','Двоичная система'],['Number system that uses only 0 and 1','Система счисления из 0 и 1']]]),
+  mk('web','cs',['How the web works','Как устроен веб'],['What happens between typing an address and seeing a page.','Что происходит между вводом адреса и появлением страницы.'],[
+    ['HTML',['Language that gives a web page its structure','Язык, который задаёт структуру страницы']],['CSS',['Language that styles a web page','Язык оформления страницы']],
+    ['JavaScript',['Language that makes a web page interactive','Язык, который делает страницу интерактивной']],['URL',['The address of a page','Адрес страницы']],
+    ['HTTP',['Protocol browsers and servers use to exchange pages','Протокол, по которому браузер и сервер обмениваются страницами']],[['Server','Сервер'],['Computer that stores a site and sends it to visitors','Компьютер, который хранит сайт и отдаёт его посетителям']],
+    [['Browser','Браузер'],['App that fetches and displays web pages','Программа, которая загружает и показывает страницы']],['DNS',['Turns a site name into an IP address','Превращает имя сайта в IP-адрес']]]),
+  mk('sat','prep',['SAT power words','Сильные слова для SAT'],['Adjectives that show up again and again.','Прилагательные, которые встречаются снова и снова.'],[
+    ['benevolent',['Kind and generous','Доброжелательный, щедрый']],['candid',['Honest and direct','Искренний, прямой']],['diligent',['Hard-working and careful','Усердный, старательный']],['eloquent',['Fluent and persuasive in speech','Красноречивый']],
+    ['frugal',['Careful with money','Бережливый, экономный']],['meticulous',['Very attentive to detail','Скрупулёзный, внимательный к мелочам']],['pragmatic',['Practical rather than idealistic','Прагматичный, практичный']],
+    ['resilient',['Able to recover quickly','Стойкий, быстро восстанавливается']],['skeptical',['Doubtful, not easily convinced','Скептичный, недоверчивый']],['tenacious',['Persistent, not giving up','Упорный, цепкий']]]),
+  mk('devices','prep',['Literary devices','Литературные приёмы'],['Spot them in a text, use them in an essay.','Найди их в тексте и используй в эссе.'],[
+    [['Metaphor','Метафора'],['Saying one thing is another','Одно называют другим по сходству']],[['Simile','Сравнение'],['Comparing with "like" or "as"','Сопоставление со словами «как», «словно»']],
+    [['Alliteration','Аллитерация'],['Repeating the same starting sound','Повтор одинаковых согласных звуков']],[['Hyperbole','Гипербола'],['Deliberate exaggeration','Намеренное преувеличение']],
+    [['Irony','Ирония'],['Meaning the opposite of what is said','Говорят одно, а имеют в виду противоположное']],[['Personification','Олицетворение'],['Giving human traits to non-human things','Неживому приписывают человеческие черты']],
+    [['Foreshadowing','Предзнаменование'],['Hinting at what comes later','Намёк на то, что случится позже']],[['Onomatopoeia','Звукоподражание'],['A word that sounds like what it names','Слово, которое звучит как то, что называет']]]),
+  mk('paintings','arts',['Famous paintings','Знаменитые картины'],['Who painted what.','Кто что написал.'],[
+    [['Mona Lisa','Мона Лиза'],['Leonardo da Vinci','Леонардо да Винчи']],[['The Starry Night','Звёздная ночь'],['Vincent van Gogh','Винсент Ван Гог']],[['The Scream','Крик'],['Edvard Munch','Эдвард Мунк']],
+    [['Guernica','Герника'],['Pablo Picasso','Пабло Пикассо']],[['Girl with a Pearl Earring','Девушка с жемчужной серёжкой'],['Johannes Vermeer','Ян Вермеер']],[['The Persistence of Memory','Постоянство памяти'],['Salvador Dalí','Сальвадор Дали']],
+    [['The Birth of Venus','Рождение Венеры'],['Sandro Botticelli','Сандро Боттичелли']],[['The Night Watch','Ночной дозор'],['Rembrandt','Рембрандт']]]),
+  mk('music','arts',['Music terms','Музыкальные термины'],['Italian words printed on every score.','Итальянские слова, которые есть в любых нотах.'],[
+    [['Tempo','Темп'],['The speed of the music','Скорость исполнения музыки']],[['Forte','Форте'],['Loud','Громко']],[['Piano','Пиано'],['Soft','Тихо']],[['Crescendo','Крещендо'],['Gradually getting louder','Постепенно громче']],
+    [['Allegro','Аллегро'],['Fast and lively','Быстро и живо']],[['Adagio','Адажио'],['Slow','Медленно']],[['Chord','Аккорд'],['Three or more notes played together','Три и более нот, звучащих одновременно']],
+    [['Octave','Октава'],['The distance between a note and the next one with the same name','Расстояние между нотой и ближайшей нотой с тем же названием']]])
 ];
 var DMAP={};DISCOVER.forEach(function(s){DMAP[s.id]=s;});
+var ZH=['zh1','zh2','zh4','zh5','zhread','zhwrite'];
+var GOAL=20;
 
 /* ---------- storage ---------- */
 var mem={};
 var store={
-  get:function(k,f){try{var v=localStorage.getItem(k);return v==null?(k in mem?mem[k]:f):JSON.parse(v);}catch(e){return k in mem?mem[k]:f;}},
-  set:function(k,v){mem[k]=v;try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+  ok:true,
+  get:function(k,f){try{var v=localStorage.getItem(k);return v==null?(k in mem?mem[k]:f):JSON.parse(v);}catch(e){this.ok=false;return k in mem?mem[k]:f;}},
+  set:function(k,v){mem[k]=v;if(!this.ok)return true;try{localStorage.setItem(k,JSON.stringify(v));return true;}catch(e){return false;}}
 };
 var KEY='flashcar.v1';
 var S=store.get(KEY,null)||{};
 if(!S.name)S.name='';
-if(!S.library)S.library=['capitals','ielts','cell'];
+if(!Array.isArray(S.library))S.library=['capitals','ielts'];
 if(!S.sets)S.sets={};
 if(!S.progress)S.progress={};
-if(!S.activity)S.activity={};
-function save(){store.set(KEY,S);}
+if(!S.days)S.days={};
+if(S.activity){Object.keys(S.activity).forEach(function(k){if(!S.days[k])S.days[k]={r:S.activity[k],w:0};});delete S.activity;}
+if(!S.v){ZH.slice().reverse().forEach(function(id){if(S.library.indexOf(id)<0)S.library.unshift(id);});S.v=2;}
+function save(){return store.set(KEY,S);}
+var lang=S.lang||((navigator.language||'en').toLowerCase().indexOf('ru')===0?'ru':'en');
 
 /* ---------- helpers ---------- */
-var $app=document.getElementById('app');
+var $app=document.getElementById('app'),$top=document.getElementById('top');
+function li(){return lang==='ru'?1:0;}
+function t(k){var a=arguments,s=I[k]?I[k][li()]:k;return String(s).replace(/\{(\d)\}/g,function(m,i){return a[+i+1];});}
+function pl(n,k){var f=PL[k][li()];if(lang==='ru'){var a=n%10,b=n%100;return f[a===1&&b!==11?0:(a>=2&&a<=4&&(b<12||b>14))?1:2];}return f[n===1?0:1];}
+function L(v){return Array.isArray(v)?v[li()]:(v==null?'':v);}
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
-function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
+function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var x=a[i];a[i]=a[j];a[j]=x;}return a;}
 function dayKey(d){d=d||new Date();return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);}
 function getSet(id){return S.sets[id]||DMAP[id]||null;}
 function inLib(id){return S.library.indexOf(id)>=0;}
 function libSets(){return S.library.map(getSet).filter(Boolean);}
-function topicOf(s){return TOPICS[s.topic]||TOPICS.other;}
+function tkey(s){return TOPICS[s.topic]?s.topic:'other';}
+function tname(k){return TOPICS[k].n[li()];}
 function prog(id){if(!S.progress[id])S.progress[id]={cards:{},last:0,best:null};return S.progress[id];}
-function lvl(id,cid){var p=S.progress[id];return p&&p.cards[cid]?p.cards[cid].l:0;}
+/* card state: 0 new, 1 learning, 2 mastered, 3 to review */
+function cst(id,cid){var p=S.progress[id],c=p&&p.cards[cid];if(!c)return 0;return c.x?3:c.l>=2?2:c.l===1?1:0;}
 function stats(s){
-  var m=0,l=0;s.cards.forEach(function(c){var v=lvl(s.id,c.id);if(v>=2)m++;else if(v===1)l++;});
-  var t=s.cards.length||1;
-  return {total:s.cards.length,m:m,l:l,n:s.cards.length-m-l,pct:Math.round(m/t*100),mp:m/t*100,lp:l/t*100,last:(S.progress[s.id]||{}).last||0};
+  var x={total:s.cards.length,m:0,l:0,r:0,n:0,last:(S.progress[s.id]||{}).last||0};
+  s.cards.forEach(function(c){var v=cst(s.id,c.id);if(v===2)x.m++;else if(v===1)x.l++;else if(v===3)x.r++;else x.n++;});
+  x.pct=Math.round(x.m/(x.total||1)*100);return x;
 }
+function addStats(a,b){a.total+=b.total;a.m+=b.m;a.l+=b.l;a.r+=b.r;a.n+=b.n;a.pct=Math.round(a.m/(a.total||1)*100);return a;}
+function today(){var k=dayKey();return S.days[k]||(S.days[k]={r:0,w:0});}
 function record(id,cid,right){
-  var p=prog(id),c=p.cards[cid]||(p.cards[cid]={l:0,c:0,w:0});
-  if(right){c.c++;c.l=Math.min(2,c.l+1);}else{c.w++;c.l=1;}
-  touch(id,1);
+  var p=prog(id),c=p.cards[cid]||(p.cards[cid]={l:0,c:0,w:0,x:0}),d=today();
+  if(right){c.c++;d.r++;if(c.x){c.x=0;c.l=1;}else if(c.l<2){c.l++;if(c.l===2)d.u=(d.u||0)+1;}}
+  else{c.w++;d.w++;if(c.l>=2)d.d=(d.d||0)+1;c.x=1;c.l=1;}
+  c.t=Date.now();p.last=c.t;if(!inLib(id))S.library.unshift(id);save();
 }
-function touch(id,n){
-  prog(id).last=Date.now();
-  var k=dayKey();S.activity[k]=(S.activity[k]||0)+n;
-  if(!inLib(id))S.library.unshift(id);
-  save();
-}
-function streak(){
-  var d=new Date(),n=0;
-  if(!S.activity[dayKey(d)])d.setDate(d.getDate()-1);
-  while(S.activity[dayKey(d)]){n++;d.setDate(d.getDate()-1);}
-  return n;
-}
+function lastDays(n){var a=[];for(var i=n-1;i>=0;i--){var d=new Date();d.setDate(d.getDate()-i);var r=S.days[dayKey(d)]||{};a.push({date:d,r:r.r||0,w:r.w||0,u:r.u||0,dn:r.d||0});}return a;}
+function sum(a,f){return a.reduce(function(s,x){return s+f(x);},0);}
+function streak(){var d=new Date(),n=0,has=function(){var r=S.days[dayKey(d)];return r&&((r.r||0)+(r.w||0))>0;};if(!has())d.setDate(d.getDate()-1);while(has()){n++;d.setDate(d.getDate()-1);}return n;}
 function ago(ts){
-  if(!ts)return 'Not studied yet';
-  var a=new Date(ts),b=new Date();a.setHours(0,0,0,0);b.setHours(0,0,0,0);
-  var n=Math.round((b-a)/864e5);
-  return n===0?'Studied today':n===1?'Studied yesterday':'Studied '+n+' days ago';
+  if(!ts)return t('st_never');
+  var a=new Date(ts),b=new Date();a.setHours(0,0,0,0);b.setHours(0,0,0,0);var n=Math.round((b-a)/864e5);
+  return n===0?t('st_today'):n===1?t('st_yest'):t('st_days',n);
 }
-function totals(){
-  var m=0,l=0,t=0,started=0;
-  libSets().forEach(function(s){var x=stats(s);m+=x.m;l+=x.l;t+=x.total;if(x.m+x.l>0)started++;});
-  var ans=0;Object.keys(S.activity).forEach(function(k){ans+=S.activity[k];});
-  return {m:m,l:l,t:t,started:started,ans:ans};
+function totals(){var x={total:0,m:0,l:0,r:0,n:0,pct:0};libSets().forEach(function(s){addStats(x,stats(s));});return x;}
+function topicGroups(){
+  var g={};libSets().forEach(function(s){var k=tkey(s);(g[k]=g[k]||[]).push(s);});
+  return Object.keys(TOPICS).filter(function(k){return g[k];}).map(function(k){var x={total:0,m:0,l:0,r:0,n:0,pct:0};g[k].forEach(function(s){addStats(x,stats(s));});return {k:k,sets:g[k],x:x};});
 }
-function toast(msg){
-  var o=document.querySelector('.toast');if(o)o.remove();
-  var t=document.createElement('div');t.className='toast';t.setAttribute('role','status');t.textContent=msg;document.body.appendChild(t);
-  setTimeout(function(){t.remove();},1800);
+function reviewItems(){
+  var a=[];libSets().forEach(function(s){var p=S.progress[s.id];if(!p)return;s.cards.forEach(function(c){var r=p.cards[c.id];if(r&&r.x)a.push({s:s,c:c,t:r.t||0});});});
+  return a.sort(function(x,y){return y.t-x.t;});
 }
-function bar(x,lg){return '<span class="bar'+(lg?' lg':'')+'"><i class="m" style="width:'+x.mp+'%"></i><i class="l" style="width:'+x.lp+'%"></i></span>';}
+function toast(msg){var o=document.querySelector('.toast');if(o)o.remove();var e=document.createElement('div');e.className='toast';e.setAttribute('role','status');e.textContent=msg;document.body.appendChild(e);setTimeout(function(){e.remove();},2200);}
+function signed(n){return (n>0?'+':'−')+Math.abs(n);}
+function bd(x){return t('k_mast')+' '+x.m+', '+t('k_learn')+' '+x.l+', '+t('k_rev')+' '+x.r+', '+t('k_new')+' '+x.n;}
+function seg(x,tall){
+  var parts=[['m',x.m],['l',x.l],['r',x.r],['n',x.n]].filter(function(p){return p[1]>0;});
+  if(!parts.length)parts=[['n',1]];
+  return '<span class="seg'+(tall?' tall':'')+'" role="img" aria-label="'+esc(bd(x))+'" title="'+esc(bd(x))+'">'+parts.map(function(p){return '<i class="'+p[0]+'" style="flex:'+p[1]+'">'+(tall&&x.total&&p[1]/x.total>=.14?p[1]:'')+'</i>';}).join('')+'</span>';
+}
+function legend(){return '<div class="legend"><span><i class="sw m"></i>'+t('k_mast')+'</span><span><i class="sw l"></i>'+t('k_learn')+'</span><span><i class="sw r"></i>'+t('k_rev')+'</span><span><i class="sw n"></i>'+t('k_new')+'</span></div>';}
+function ticon(k){var tp=TOPICS[k]||TOPICS.other;return '<span class="ticon" aria-hidden="true">'+(tp.g?'<span lang="zh-Hans">'+tp.g+'</span>':'<svg viewBox="0 0 24 24"><path d="'+tp.i+'"/></svg>')+'</span>';}
+function imgH(c,cls){return c.img&&/^data:image\//.test(c.img)?'<img class="cimg '+cls+'" src="'+esc(c.img)+'" alt="">':'';}
+function zhA(s){return s.zh?' lang="zh-Hans"':'';}
+function avatarH(big){return '<span class="avatar'+(big?' big':'')+'">'+(S.avatar?'<img src="'+esc(S.avatar)+'" alt="">':esc((S.name||'A').charAt(0).toUpperCase()))+'</span>';}
 function setRow(s){
-  var x=stats(s),t=topicOf(s);
-  return '<a class="row" href="#set/'+esc(s.id)+'"><span class="ticon">'+t.e+'</span><span class="rmain"><b>'+esc(s.title)+'</b><small>'+esc(t.n)+' · '+x.total+' cards · '+ago(x.last)+'</small></span><span class="rprog">'+bar(x)+'<small>'+x.pct+'% mastered</small></span></a>';
+  var x=stats(s);
+  return '<a class="row" href="#set/'+esc(s.id)+'">'+ticon(tkey(s))+'<span class="rmain"><b>'+esc(L(s.title))+'</b><small>'+ago(x.last)+'</small></span><span class="rprog">'+seg(x)+'<small>'+t('x_of_y',x.m,x.total)+'</small></span></a>';
 }
 function tile(s){
-  var t=topicOf(s),added=inLib(s.id);
-  return '<div class="tile"><span class="tag">'+t.e+' '+esc(t.n)+'</span><h3><a href="#set/'+esc(s.id)+'">'+esc(s.title)+'</a></h3><p>'+esc(s.desc||'')+'</p><div class="tile-f"><small>'+s.cards.length+' cards</small><span><a class="btn sm ghost" href="#set/'+esc(s.id)+'">Open</a> <button class="btn sm'+(added?'':' pri')+'" data-act="lib" data-id="'+esc(s.id)+'">'+(added?'✓ Added':'+ Add')+'</button></span></div></div>';
+  var k=tkey(s),on=inLib(s.id),n=s.cards.length;
+  return '<div class="tile"><div class="tile-h">'+ticon(k)+'<small>'+esc(tname(k))+'</small></div><h3><a href="#set/'+esc(s.id)+'">'+esc(L(s.title))+'</a></h3><p>'+esc(L(s.desc))+'</p><div class="tile-f"><small>'+n+' '+pl(n,'cards')+'</small><span class="tile-b"><a class="btn sm" href="#set/'+esc(s.id)+'">'+t('open')+'</a><button class="btn sm'+(on?'':' pri')+'" data-act="lib" data-id="'+esc(s.id)+'">'+(on?'✓ '+t('added'):'+ '+t('add'))+'</button></span></div></div>';
 }
-function empty(title,text,href,label){return '<div class="empty"><b>'+title+'</b>'+text+(href?'<br><a class="btn pri" href="'+href+'">'+label+'</a>':'')+'</div>';}
+function empty(a,b,href,label){return '<div class="empty"><b>'+a+'</b>'+b+(href?'<br><a class="btn pri" href="'+href+'">'+label+'</a>':'')+'</div>';}
+function kpi(label,val,sw,extra){return '<div class="kpi"><span class="kl">'+(sw?'<i class="sw '+sw+'"></i>':'')+label+'</span><b>'+val+'</b>'+(extra||'')+'</div>';}
+function delta(n,txt){return n?'<span class="delta '+(n>0?'up':'down')+'">'+(n>0?'▲ ':'▼ ')+txt+'</span>':'';}
+function loc(){return lang==='ru'?'ru':'en';}
+function chart(days){
+  var H=112,mx=Math.max(4,Math.max.apply(null,days.map(function(d){return d.r+d.w;})));
+  var step=mx<=10?2:mx<=40?10:mx<=100?20:50;mx=Math.ceil(mx/step)*step;
+  var cols=days.map(function(d,i){
+    var tot=d.r+d.w,lab=d.date.toLocaleDateString(loc(),{weekday:'long',day:'numeric',month:'long'})+': '+t('right')+' '+d.r+', '+t('wrong')+' '+d.w;
+    return '<div class="colw" title="'+esc(lab)+'">'+(i===days.length-1&&tot?'<b class="cap">'+tot+'</b>':'')+'<div class="col">'+(d.w?'<i class="w" style="height:'+Math.max(3,Math.round(d.w/mx*H))+'px"></i>':'')+(d.r?'<i class="r" style="height:'+Math.max(3,Math.round(d.r/mx*H))+'px"></i>':'')+'</div></div>';
+  }).join('');
+  var xs=days.map(function(d,i){return '<span>'+(days.length>7?((days.length-1-i)%2?'':d.date.getDate()):d.date.toLocaleDateString(loc(),{weekday:'short'}))+'</span>';}).join('');
+  var rows=days.map(function(d){return '<tr><td>'+d.date.toLocaleDateString(loc(),{day:'numeric',month:'short'})+'</td><td>'+d.r+'</td><td>'+d.w+'</td><td>'+(d.r+d.w)+'</td></tr>';}).join('');
+  return '<div class="legend" style="margin-top:12px"><span><i class="sw m"></i>'+t('right')+'</span><span><i class="sw r"></i>'+t('wrong')+'</span></div><div class="plot" role="img" aria-label="'+esc(t('week_sub'))+'"><span class="gl" style="bottom:'+H+'px"><em>'+mx+'</em></span><span class="gl" style="bottom:'+H/2+'px"><em>'+mx/2+'</em></span>'+cols+'</div><div class="xax">'+xs+'</div><details class="tv"><summary>'+t('table')+'</summary><table><tr><th>'+t('day')+'</th><th>'+t('right')+'</th><th>'+t('wrong')+'</th><th>'+t('total')+'</th></tr>'+rows+'</table></details>';
+}
+function subjects(g){
+  if(!g.length)return '<small>'+t('no_subject')+'</small>';
+  var rows=g.map(function(o){return '<button class="subj" data-act="goTopic" data-id="'+o.k+'">'+ticon(o.k)+'<span class="sn">'+esc(tname(o.k))+'</span>'+seg(o.x)+'<span class="fig"><b>'+o.x.pct+'%</b>'+o.x.m+' / '+o.x.total+'</span></button>';}).join('');
+  var tb=g.map(function(o){return '<tr><td>'+esc(tname(o.k))+'</td><td>'+o.x.m+'</td><td>'+o.x.l+'</td><td>'+o.x.r+'</td><td>'+o.x.n+'</td></tr>';}).join('');
+  return rows+'<div style="margin-top:14px">'+legend()+'</div><details class="tv"><summary>'+t('table')+'</summary><table><tr><th>'+t('subject')+'</th><th>'+t('k_mast')+'</th><th>'+t('k_learn')+'</th><th>'+t('k_rev')+'</th><th>'+t('k_new')+'</th></tr>'+tb+'</table></details>';
+}
 
 /* ---------- views ---------- */
 var ui={matTopic:'all',matQ:'',disTopic:'all',disQ:''};
 var session=null,draft=null,armed=null;
 
 function vHome(){
-  var libs=libSets(),t=totals(),st=streak();
+  var libs=libSets(),x=totals(),st=streak(),td=S.days[dayKey()]||{},done=(td.r||0)+(td.w||0),d14=lastDays(14),w1=d14.slice(7),w0=d14.slice(0,7);
   var recent=libs.slice().sort(function(a,b){return stats(b).last-stats(a).last;});
   var cont=recent[0]&&stats(recent[0]).last?recent[0]:null;
-  var h='<div class="stack"><section class="hero"><div><h1>'+(S.name?'Welcome back, '+esc(S.name):'Welcome to FlashCar')+'</h1><p>'+(t.ans?'You have mastered '+t.m+' of '+t.t+' cards in your materials. Keep rolling.':'Pick a set, flip some cards, and watch your progress grow.')+'</p></div><div class="streak"><b>'+st+'</b>day streak 🔥</div></section>';
-  if(cont){
-    var x=stats(cont);
-    h+='<section><h2>Jump back in</h2><div class="panel cont" style="margin-top:12px"><span class="ticon">'+topicOf(cont).e+'</span><div class="rmain"><b>'+esc(cont.title)+'</b><small>'+x.m+' mastered · '+x.l+' still learning · '+x.n+' not studied</small><div style="margin-top:8px">'+bar(x,1)+'</div></div><a class="btn pri" href="#study/'+esc(cont.id)+'/learn">Continue learning</a><a class="btn" href="#set/'+esc(cont.id)+'">Open set</a></div></section>';
-  }
-  h+='<section><div class="head"><h2>Your materials</h2><a class="btn sm ghost" href="#materials">See all</a></div><div style="margin-top:12px">'+(libs.length?'<div class="rows">'+recent.slice(0,4).map(setRow).join('')+'</div>':empty('Nothing here yet','Add a ready-made set or make your own.','#discover','Browse Discover'))+'</div></section>';
+  var a1=sum(w1,function(d){return d.r+d.w;}),a0=sum(w0,function(d){return d.r+d.w;});
+  var acc1=a1?Math.round(sum(w1,function(d){return d.r;})/a1*100):null,acc0=a0?Math.round(sum(w0,function(d){return d.r;})/a0*100):null;
+  var net=sum(w1,function(d){return d.u-d.dn;});
+  var h='<div class="stack"><section class="hero"><div class="hero-a"><h1>'+(S.name?t('hello',esc(S.name)):t('hello0'))+'</h1><p>'+(x.m||x.l||x.r?t('hero_sub',x.m,x.total):t('hero_sub0'))+'</p>'+(cont?'<a class="btn pri" href="#study/'+esc(cont.id)+'/learn">'+t('cont')+': '+esc(L(cont.title))+'</a>':'<a class="btn pri" href="#materials">'+t('start')+'</a>')+'</div>';
+  h+='<div class="panel goal"><small>'+t('today')+'</small><div><b>'+done+' <span>'+t('goal_of',GOAL)+'</span></b></div><div class="meter" role="img" aria-label="'+done+' / '+GOAL+'"><i style="width:'+Math.min(100,done/GOAL*100)+'%"></i></div><small>'+(done>=GOAL?t('goal_done'):t('goal_left',GOAL-done))+' '+st+' '+pl(st,'streak')+'.</small></div></section>';
+  h+='<section class="kpis">'+kpi(t('k_mast'),x.m,'m',delta(net,t('this_week',signed(net))))+kpi(t('k_learn'),x.l,'l')+kpi(t('k_rev'),x.r,'r')+kpi(t('k_acc'),acc1==null?'–':acc1+'%','',acc1!=null&&acc0!=null?delta(acc1-acc0,t('vs_week',signed(acc1-acc0))):'')+'</section>';
+  h+='<div class="two"><section class="panel"><h2>'+t('by_subject')+'</h2><p class="sub" style="margin-bottom:10px">'+t('by_subject_sub')+'</p>'+subjects(topicGroups())+'</section><section class="panel"><h2>'+t('week')+'</h2><p class="sub">'+t('week_sub')+'</p>'+chart(w1)+'</section></div>';
+  var rv=reviewItems();
+  h+='<div class="two even"><section class="panel"><h2>'+t('review_h')+'</h2><p class="sub" style="margin-bottom:8px">'+(rv.length?t('review_sub'):t('review_none'))+'</p>'+rv.slice(0,5).map(function(o){return '<div class="rev"><i class="sw r"></i><span class="rmain"><b'+zhA(o.s)+'>'+esc(L(o.c.t))+'</b><small>'+(o.c.p?esc(o.c.p)+', ':'')+esc(L(o.s.title))+'</small></span><a class="btn sm" href="#study/'+esc(o.s.id)+'/learn">'+t('review_btn')+'</a></div>';}).join('')+(rv.length>5?'<small>'+t('more',rv.length-5)+'</small>':'')+'</section>';
+  h+='<section><div class="head" style="margin-bottom:12px"><h2>'+t('your_mat')+'</h2><a class="btn sm" href="#materials">'+t('see_all')+'</a></div>'+(libs.length?'<div class="rows">'+recent.slice(0,4).map(setRow).join('')+'</div>':empty(t('empty_t'),t('empty_p'),'#discover',t('browse')))+'</section></div>';
   var pop=DISCOVER.filter(function(s){return !inLib(s.id);}).slice(0,4);
-  if(pop.length)h+='<section><div class="head"><h2>Popular on Discover</h2><a class="btn sm ghost" href="#discover">Explore topics</a></div><div class="grid" style="margin-top:12px">'+pop.map(tile).join('')+'</div></section>';
+  if(pop.length)h+='<section><div class="head" style="margin-bottom:12px"><h2>'+t('from_disc')+'</h2><a class="btn sm" href="#discover">'+t('explore')+'</a></div><div class="grid">'+pop.map(tile).join('')+'</div></section>';
   return h+'</div>';
 }
 
 function topicChips(act,cur,keys){
-  return '<div class="chips"><button class="chip'+(cur==='all'?' on':'')+'" data-act="'+act+'" data-id="all">All topics</button>'+keys.map(function(k){return '<button class="chip'+(cur===k?' on':'')+'" data-act="'+act+'" data-id="'+k+'">'+TOPICS[k].e+' '+esc(TOPICS[k].n)+'</button>';}).join('')+'</div>';
+  return '<div class="chips"><button class="chip'+(cur==='all'?' on':'')+'" data-act="'+act+'" data-id="all">'+t('all_topics')+'</button>'+keys.map(function(k){return '<button class="chip'+(cur===k?' on':'')+'" data-act="'+act+'" data-id="'+k+'">'+esc(tname(k))+'</button>';}).join('')+'</div>';
 }
 function matList(){
   var q=ui.matQ.toLowerCase();
-  var list=libSets().filter(function(s){return (ui.matTopic==='all'||(TOPICS[s.topic]?s.topic:'other')===ui.matTopic)&&(!q||s.title.toLowerCase().indexOf(q)>=0);});
-  if(!S.library.length)return empty('Your materials are empty','Add a set from Discover or create your own.','#discover','Browse Discover');
-  return list.length?'<div class="rows">'+list.map(setRow).join('')+'</div>':empty('No sets match','Try another topic or search word.');
+  if(!S.library.length)return empty(t('matempty_t'),t('matempty_p'),'#discover',t('browse'));
+  var list=libSets().filter(function(s){return (ui.matTopic==='all'||tkey(s)===ui.matTopic)&&(!q||L(s.title).toLowerCase().indexOf(q)>=0);});
+  return list.length?'<div class="rows">'+list.map(setRow).join('')+'</div>':empty(t('nomatch_t'),t('nomatch_p'));
 }
 function vMaterials(){
-  var keys=Object.keys(TOPICS).filter(function(k){return libSets().some(function(s){return (TOPICS[s.topic]?s.topic:'other')===k;});});
+  var keys=topicGroups().map(function(o){return o.k;});
   if(ui.matTopic!=='all'&&keys.indexOf(ui.matTopic)<0)ui.matTopic='all';
-  return '<div class="stack"><div class="head"><div><h1>Materials</h1><p class="sub">Every set you have added or created, with your progress on each.</p></div><a class="btn pri" href="#create">+ Create a set</a></div><div class="head"><div class="search"><input type="search" id="matQ" placeholder="Search your materials" value="'+esc(ui.matQ)+'" aria-label="Search your materials"></div></div>'+topicChips('matTopic',ui.matTopic,keys)+'<div id="matList">'+matList()+'</div></div>';
+  return '<div class="stack"><div class="head"><div><h1>'+t('nav_mat')+'</h1><p class="sub">'+t('mat_sub')+'</p></div><a class="btn pri" href="#create">+ '+t('create_set')+'</a></div><div class="search"><input type="search" id="matQ" placeholder="'+t('search_mat')+'" value="'+esc(ui.matQ)+'" aria-label="'+t('search_mat')+'"></div>'+topicChips('matTopic',ui.matTopic,keys)+'<div id="matList">'+matList()+'</div></div>';
 }
-
+function hay(s){return [s.title,s.desc].concat(s.cards.map(function(c){return c.t;})).map(function(v){return Array.isArray(v)?v.join(' '):v;}).join(' ').toLowerCase();}
 function disList(){
-  var q=ui.disQ.toLowerCase();
-  var keys=Object.keys(TOPICS).filter(function(k){return ui.disTopic==='all'||ui.disTopic===k;});
-  var h='';
-  keys.forEach(function(k){
-    var list=DISCOVER.filter(function(s){return s.topic===k&&(!q||(s.title+' '+s.desc+' '+s.cards.map(function(c){return c.t;}).join(' ')).toLowerCase().indexOf(q)>=0);});
-    if(list.length)h+='<section style="margin-top:26px"><h2>'+TOPICS[k].e+' '+esc(TOPICS[k].n)+'</h2><div class="grid" style="margin-top:12px">'+list.map(tile).join('')+'</div></section>';
+  var q=ui.disQ.toLowerCase(),h='';
+  Object.keys(TOPICS).forEach(function(k){
+    if(ui.disTopic!=='all'&&ui.disTopic!==k)return;
+    var list=DISCOVER.filter(function(s){return s.topic===k&&(!q||hay(s).indexOf(q)>=0);});
+    if(list.length)h+='<section style="margin-top:26px"><h2>'+esc(tname(k))+'</h2><div class="grid" style="margin-top:12px">'+list.map(tile).join('')+'</div></section>';
   });
-  return h||empty('Nothing found','Try a different word, or create this set yourself.','#create','Create a set');
+  return h||empty(t('none_t'),t('none_p'),'#create',t('create_set'));
 }
 function vDiscover(){
-  var keys=Object.keys(TOPICS).filter(function(k){return k!=='other';});
-  return '<div class="stack"><div><h1>Discover</h1><p class="sub">'+DISCOVER.length+' ready-made sets across '+keys.length+' topics. Add any of them to your materials in one tap.</p></div><div class="search"><input type="search" id="disQ" placeholder="Search sets, e.g. capitals or formulas" value="'+esc(ui.disQ)+'" aria-label="Search Discover"></div>'+topicChips('disTopic',ui.disTopic,keys)+'<div id="disList" style="margin-top:0">'+disList()+'</div></div>';
+  var keys=Object.keys(TOPICS).filter(function(k){return DISCOVER.some(function(s){return s.topic===k;});});
+  return '<div class="stack"><div><h1>'+t('nav_disc')+'</h1><p class="sub">'+t('disc_sub',DISCOVER.length,keys.length)+'</p></div><div class="search"><input type="search" id="disQ" placeholder="'+t('search_disc')+'" value="'+esc(ui.disQ)+'" aria-label="'+t('search_disc')+'"></div>'+topicChips('disTopic',ui.disTopic,keys)+'<div id="disList" style="margin-top:0">'+disList()+'</div></div>';
 }
 
-function topicGroups(){
-  var g={};
-  libSets().forEach(function(s){var k=TOPICS[s.topic]?s.topic:'other';(g[k]=g[k]||[]).push(s);});
-  return Object.keys(TOPICS).filter(function(k){return g[k];}).map(function(k){
-    var m=0,l=0,t=0;g[k].forEach(function(s){var x=stats(s);m+=x.m;l+=x.l;t+=x.total;});
-    return {k:k,sets:g[k],x:{m:m,l:l,total:t,pct:Math.round(m/(t||1)*100),mp:m/(t||1)*100,lp:l/(t||1)*100}};
-  });
-}
 function vProgress(){
-  var t=totals(),g=topicGroups(),days=[],max=1;
-  for(var i=6;i>=0;i--){var d=new Date();d.setDate(d.getDate()-i);var n=S.activity[dayKey(d)]||0;max=Math.max(max,n);days.push({l:d.toLocaleDateString('en',{weekday:'short'}),n:n});}
-  var h='<div class="stack"><div><h1>Progress</h1><p class="sub">Get a card right twice and it counts as mastered.</p></div>';
-  h+='<div class="stats"><div class="stat"><b>'+t.m+'</b><span>cards mastered</span></div><div class="stat"><b>'+t.l+'</b><span>still learning</span></div><div class="stat"><b>'+t.started+'</b><span>'+(t.started===1?'set':'sets')+' in progress</span></div><div class="stat"><b>'+streak()+'</b><span>day streak</span></div><div class="stat"><b>'+t.ans+'</b><span>cards answered</span></div></div>';
-  h+='<div class="two"><section class="panel"><h2>Last 7 days</h2><p class="sub" style="margin-bottom:16px">Cards answered each day</p><div class="week">'+days.map(function(d){return '<div><span>'+d.n+'</span><i class="'+(d.n?'':'z')+'" style="height:'+(d.n/max*100)+'%"></i><span>'+d.l+'</span></div>';}).join('')+'</div></section>';
-  h+='<section class="panel"><h2>By topic</h2><p class="sub" style="margin-bottom:16px">How much of each topic you have mastered</p>'+(g.length?g.map(function(o){return '<div style="margin-top:14px"><div class="head" style="margin-bottom:6px"><b>'+TOPICS[o.k].e+' '+esc(TOPICS[o.k].n)+'</b><small>'+o.x.m+' / '+o.x.total+' cards</small></div>'+bar(o.x,1)+'</div>';}).join(''):'<small>Add a set to see topics here.</small>')+'</section></div>';
+  var x=totals(),ans=0;Object.keys(S.days).forEach(function(k){ans+=(S.days[k].r||0)+(S.days[k].w||0);});
   var libs=libSets().slice().sort(function(a,b){return stats(b).last-stats(a).last;});
-  h+='<section><div class="head"><h2>By set</h2><div class="legend"><span><i class="dot m"></i>Mastered</span><span><i class="dot l"></i>Still learning</span><span><i class="dot"></i>Not studied</span></div></div><div style="margin-top:12px">'+(libs.length?'<div class="rows">'+libs.map(setRow).join('')+'</div>':empty('No progress yet','Study a set and it will show up here.','#discover','Find a set'))+'</div></section>';
+  var h='<div class="stack"><div><h1>'+t('nav_prog')+'</h1><p class="sub">'+t('prog_sub')+'</p></div>';
+  h+='<section class="kpis five">'+kpi(t('k_mast'),x.m,'m')+kpi(t('k_learn'),x.l,'l')+kpi(t('k_rev'),x.r,'r')+kpi(t('k_streak'),streak())+kpi(t('k_ans'),ans)+'</section>';
+  h+='<div class="two even"><section class="panel"><h2>'+t('by_subject')+'</h2><p class="sub" style="margin-bottom:10px">'+t('by_subject_sub')+'</p>'+subjects(topicGroups())+'</section><section class="panel"><h2>'+t('two_weeks')+'</h2><p class="sub">'+t('week_sub')+'</p>'+chart(lastDays(14))+'</section></div>';
+  h+='<section><div class="head" style="margin-bottom:12px"><h2>'+t('by_set')+'</h2>'+legend()+'</div>'+(libs.length?'<div class="rows">'+libs.map(setRow).join('')+'</div>':empty(t('noprog_t'),t('noprog_p'),'#discover',t('find')))+'</section>';
   return h+'</div>';
 }
 
+function segc(act,cur,opts){return '<span class="segc">'+opts.map(function(o){return '<button data-act="'+act+'" data-id="'+o[0]+'" class="'+(cur===o[0]?'on':'')+'" aria-pressed="'+(cur===o[0])+'">'+o[1]+'</button>';}).join('')+'</span>';}
 function vProfile(){
-  var t=totals(),g=topicGroups();
-  var h='<div class="stack"><section class="panel prof"><span class="avatar big">'+esc((S.name||'A').charAt(0).toUpperCase())+'</span><div style="flex:1;min-width:220px"><label class="field"><span>Your name</span><input type="text" id="nameIn" maxlength="30" placeholder="Add your name" value="'+esc(S.name)+'"></label><small style="display:block;margin-top:8px">'+S.library.length+' sets · '+t.m+' cards mastered · '+streak()+' day streak</small></div><button class="btn" data-act="theme">Switch theme</button></section>';
-  h+='<section><div class="head"><div><h2>Your materials by topic</h2><p class="sub">Tap a topic to open it, then a set to see your progress and keep studying.</p></div></div>';
+  var x=totals(),g=topicGroups(),n=S.library.length,st=streak(),th=document.documentElement.getAttribute('data-theme');
+  var h='<div class="stack"><section class="panel prof">'+avatarH(1)+'<div style="flex:1;min-width:230px"><label class="field"><span>'+t('your_name')+'</span><input type="text" id="nameIn" maxlength="30" placeholder="'+t('name_ph')+'" value="'+esc(S.name)+'"></label><div class="chips" style="margin-top:12px"><label class="btn sm file"><input type="file" accept="image/*" data-file="avatar">'+(S.avatar?t('photo_change'):t('photo_add'))+'</label>'+(S.avatar?'<button class="btn sm" data-act="rmAvatar">'+t('photo_rm')+'</button>':'')+'</div></div><div><small>'+n+' '+pl(n,'sets')+'</small><br><small>'+t('k_mast')+': '+x.m+'</small><br><small>'+st+' '+pl(st,'streak')+'</small></div></section>';
+  h+='<section><h2>'+t('by_topic')+'</h2><p class="sub">'+t('by_topic_sub')+'</p>';
   if(g.length){
-    h+='<div class="chips" style="margin:14px 0">'+g.map(function(o){return '<button class="chip" data-act="jump" data-id="'+o.k+'">'+TOPICS[o.k].e+' '+esc(TOPICS[o.k].n)+' · '+o.sets.length+'</button>';}).join('')+'</div>';
-    h+=g.map(function(o,i){return '<details class="topic" id="tp-'+o.k+'"'+(i===0?' open':'')+'><summary><span class="ticon">'+TOPICS[o.k].e+'</span><span class="rmain"><b>'+esc(TOPICS[o.k].n)+'</b><small>'+o.sets.length+(o.sets.length===1?' set':' sets')+' · '+o.x.m+' of '+o.x.total+' cards mastered</small></span><span class="rprog">'+bar(o.x)+'<small>'+o.x.pct+'%</small></span></summary>'+o.sets.map(setRow).join('')+'</details>';}).join('');
-  }else h+='<div style="margin-top:12px">'+empty('No materials yet','Add sets from Discover and they will be sorted by topic here.','#discover','Browse Discover')+'</div>';
-  h+='</section><section class="panel"><h2>Your data</h2><p class="sub" style="margin-bottom:14px">FlashCar has no accounts or server. Your sets and progress are saved in this browser only.</p><button class="btn danger" data-act="wipe">'+(armed==='wipe'?'Tap again to erase everything':'Erase all my data')+'</button></section></div>';
+    h+='<div class="chips" style="margin:14px 0">'+g.map(function(o){return '<button class="chip" data-act="jump" data-id="'+o.k+'">'+esc(tname(o.k))+' '+o.sets.length+'</button>';}).join('')+'</div>';
+    h+=g.map(function(o,i){return '<details class="topic" id="tp-'+o.k+'"'+(i===0?' open':'')+'><summary>'+ticon(o.k)+'<span class="rmain"><b>'+esc(tname(o.k))+'</b><small>'+o.sets.length+' '+pl(o.sets.length,'sets')+'</small></span><span class="rprog">'+seg(o.x)+'<small>'+t('x_of_y',o.x.m,o.x.total)+'</small></span></summary>'+o.sets.map(setRow).join('')+'</details>';}).join('');
+  }else h+='<div style="margin-top:12px">'+empty(t('empty_t'),t('empty_p'),'#discover',t('browse'))+'</div>';
+  h+='</section><section class="panel"><h2>'+t('settings')+'</h2><div style="margin-top:8px"><div class="setline"><span>'+t('language')+'</span>'+segc('setLang',lang,[['en','English'],['ru','Русский']])+'</div><div class="setline"><span>'+t('theme_l')+'</span>'+segc('setTheme',th,[['dark',t('dark')],['light',t('light')]])+'</div></div></section>';
+  h+='<section class="panel"><h2>'+t('data_h')+'</h2><p class="sub" style="margin-bottom:14px">'+t('data_p')+'</p><button class="btn danger" data-act="wipe">'+(armed==='wipe'?t('wipe2'):t('wipe'))+'</button></section></div>';
   return h;
 }
 
 function vSet(id){
-  var s=getSet(id);if(!s)return empty('Set not found','It may have been deleted.','#materials','Back to materials');
-  var x=stats(s),t=topicOf(s),own=!!S.sets[id],p=S.progress[id]||{};
-  var h='<div class="stack"><div><span class="tag">'+t.e+' '+esc(t.n)+'</span><div class="head" style="margin-top:10px"><div><h1>'+esc(s.title)+'</h1><p class="sub">'+esc(s.desc||'')+(s.desc?' · ':'')+x.total+' cards · '+(own?'made by you':'by FlashCar')+'</p></div><div class="chips"><button class="btn sm'+(inLib(id)?'':' pri')+'" data-act="lib" data-id="'+esc(id)+'">'+(inLib(id)?'✓ In your materials':'+ Add to materials')+'</button>'+(own?'<a class="btn sm" href="#edit/'+esc(id)+'">Edit</a><button class="btn sm danger" data-act="del" data-id="'+esc(id)+'">'+(armed==='del'?'Tap again to delete':'Delete')+'</button>':'')+'</div></div></div>';
-  h+='<section class="panel"><div class="head"><div><h2>Your progress</h2><p class="sub">'+ago(x.last)+(p.best?' · best match time '+p.best.toFixed(1)+' s':'')+'</p></div><b style="font-size:34px;font-weight:800;letter-spacing:-.03em">'+x.pct+'%</b></div><div style="margin:14px 0">'+bar(x,1)+'</div><div class="head"><div class="legend"><span><i class="dot m"></i>'+x.m+' mastered</span><span><i class="dot l"></i>'+x.l+' still learning</span><span><i class="dot"></i>'+x.n+' not studied</span></div>'+(x.m+x.l?'<button class="btn sm ghost" data-act="reset" data-id="'+esc(id)+'">'+(armed==='reset'?'Tap again to reset':'Reset progress')+'</button>':'')+'</div></section>';
-  h+='<div class="modes"><a class="mode" href="#study/'+esc(id)+'/flash"><span>🃏</span><div><b>Flashcards</b><small>Flip and sort what you know</small></div></a><a class="mode" href="#study/'+esc(id)+'/learn"><span>🧠</span><div><b>Learn</b><small>Multiple-choice questions</small></div></a><a class="mode" href="#study/'+esc(id)+'/match"><span>⚡</span><div><b>Match</b><small>Pair terms against the clock</small></div></a></div>';
-  h+='<section><h2>Terms in this set</h2><div class="rows" style="margin-top:12px">'+s.cards.map(function(c){var v=lvl(id,c.id);return '<div class="term"><b>'+esc(c.t)+'</b><span>'+esc(c.d)+'</span><i class="pill '+(v>=2?'m':v===1?'l':'')+'" style="font-style:normal">'+(v>=2?'Mastered':v===1?'Learning':'New')+'</i></div>';}).join('')+'</div></section>';
+  var s=getSet(id);if(!s)return empty(t('nf_t'),t('nf_p'),'#materials',t('back_mat'));
+  var x=stats(s),k=tkey(s),own=!!S.sets[id],p=S.progress[id]||{},n=x.total,lab=[t('p_n'),t('p_l'),t('p_m'),t('p_r')],sw=['n','l','m','r'];
+  var h='<div class="stack"><div><div class="tile-h">'+ticon(k)+'<small>'+esc(tname(k))+'</small></div><div class="head" style="margin-top:12px"><div><h1>'+esc(L(s.title))+'</h1><p class="sub">'+esc(L(s.desc))+' '+n+' '+pl(n,'cards')+', '+(own?t('by_you'):t('by_fc'))+'.</p></div><div class="chips"><button class="btn sm'+(inLib(id)?'':' pri')+'" data-act="lib" data-id="'+esc(id)+'">'+(inLib(id)?'✓ '+t('in_mat'):'+ '+t('add_mat'))+'</button>'+(own?'<a class="btn sm" href="#edit/'+esc(id)+'">'+t('edit')+'</a><button class="btn sm danger" data-act="del" data-id="'+esc(id)+'">'+(armed==='del'?t('del2'):t('del'))+'</button>':'<a class="btn sm" href="#copy/'+esc(id)+'">'+t('copy')+'</a>')+'</div></div></div>';
+  h+='<section class="panel"><div class="head"><div><h2>'+t('your_prog')+'</h2><p class="sub">'+ago(x.last)+(p.best?'. '+t('best',p.best.toFixed(1)):'')+'</p></div><b style="font-size:40px;font-weight:700;letter-spacing:-.04em;line-height:1">'+x.pct+'%</b></div><div style="margin:16px 0 12px">'+seg(x,1)+'</div><div class="head">'+legend()+(x.m+x.l+x.r?'<button class="btn sm" data-act="reset" data-id="'+esc(id)+'">'+(armed==='reset'?t('reset2'):t('reset'))+'</button>':'')+'</div></section>';
+  h+='<div class="modes"><a class="mode" href="#study/'+esc(id)+'/flash"><b>'+t('m_flash')+'</b><small>'+t('m_flash_s')+'</small></a><a class="mode" href="#study/'+esc(id)+'/learn"><b>'+t('m_learn')+'</b><small>'+t('m_learn_s')+'</small></a><a class="mode" href="#study/'+esc(id)+'/match"><b>'+t('m_match')+'</b><small>'+t('m_match_s')+'</small></a></div>';
+  h+='<section><h2>'+t('terms_h')+'</h2><div class="rows" style="margin-top:12px">'+s.cards.map(function(c){var v=cst(id,c.id);return '<div class="term"><div><b'+zhA(s)+'>'+esc(L(c.t))+'</b>'+(c.p?'<small>'+esc(c.p)+'</small>':'')+'</div><div class="td">'+imgH(c,'sm')+'<span>'+esc(L(c.d))+'</span></div><span class="pill"><i class="sw '+sw[v]+'"></i>'+lab[v]+'</span></div>';}).join('')+'</div></section>';
   return h+'</div>';
 }
 
 /* ---------- study modes ---------- */
 function startSession(id,mode){
-  var s=getSet(id);if(!s||!s.cards.length){session=null;return;}
-  var byNeed=shuffle(s.cards).sort(function(a,b){return lvl(id,a.id)-lvl(id,b.id);});
-  if(mode==='flash')session={mode:mode,id:id,q:byNeed,i:0,flip:false,right:0,wrong:0};
-  else if(mode==='learn'){session={mode:mode,id:id,q:shuffle(byNeed.slice(0,10)),i:0,right:0,wrong:0,pick:null};mkOpts();}
-  else{
+  var s=getSet(id);session=null;if(!s||!s.cards.length)return;
+  var need=[1,2,3,0],byNeed=shuffle(s.cards).sort(function(a,b){return need[cst(id,a.id)]-need[cst(id,b.id)];});
+  if(mode==='learn'){session={mode:'learn',id:id,q:shuffle(byNeed.slice(0,10)),i:0,right:0,wrong:0,pick:null};mkOpts();}
+  else if(mode==='match'){
     var pick=shuffle(s.cards).slice(0,6),tiles=[];
-    pick.forEach(function(c){tiles.push({k:c.id,side:'t',x:c.t});tiles.push({k:c.id,side:'d',x:c.d});});
-    session={mode:'match',id:id,tiles:shuffle(tiles),sel:null,bad:[],left:pick.length,pairs:pick.length,t0:Date.now(),time:null};
-    session.timer=setInterval(function(){var e=document.getElementById('mtime');if(e&&session&&session.mode==='match')e.textContent=((Date.now()-session.t0)/1000).toFixed(1)+' s';},100);
-  }
+    pick.forEach(function(c){tiles.push({c:c,side:'t'});tiles.push({c:c,side:'d'});});
+    session={mode:'match',id:id,tiles:shuffle(tiles),sel:null,bad:[],left:pick.length,t0:Date.now(),time:null};
+    session.timer=setInterval(function(){var e=document.getElementById('mtime');if(e&&session&&session.mode==='match'&&session.left)e.textContent=((Date.now()-session.t0)/1000).toFixed(1)+' s';},100);
+  }else session={mode:'flash',id:id,q:byNeed,i:0,flip:false,right:0,wrong:0};
 }
 function endSession(){if(session&&session.timer)clearInterval(session.timer);session=null;}
+function okey(c){return L(c.d)+'|'+(c.img||'');}
 function mkOpts(){
-  var s=getSet(session.id),c=session.q[session.i],seen={};seen[c.d]=1;
-  var o=[];shuffle(s.cards).forEach(function(k){if(!seen[k.d]&&o.length<3){seen[k.d]=1;o.push(k.d);}});
-  o.push(c.d);session.opts=shuffle(o);session.pick=null;
+  var z=session,s=getSet(z.id),c=z.q[z.i],seen={},o=[];seen[okey(c)]=1;
+  shuffle(s.cards).forEach(function(k){if(k.id!==c.id&&!seen[okey(k)]&&o.length<3){seen[okey(k)]=1;o.push(k);}});
+  o.push(c);z.opts=shuffle(o);z.pick=null;
 }
 function studyTop(s,label,n,total){
-  return '<div class="study-top"><a class="btn sm ghost" href="#set/'+esc(s.id)+'">← Back</a><b>'+esc(s.title)+'</b><small>'+label+'</small></div><span class="bar"><i class="m" style="width:'+(n/total*100)+'%"></i></span>';
+  return '<div class="study-top"><a class="btn sm" href="#set/'+esc(s.id)+'">'+t('back')+'</a><b>'+esc(L(s.title))+'</b><small id="mtime">'+label+'</small></div>'+(total?'<div class="meter"><i style="width:'+(n/total*100)+'%"></i></div>':'');
 }
-function doneView(s,emoji,title,text){
-  return '<div class="study"><div class="panel done"><div class="big">'+emoji+'</div><h2>'+title+'</h2><p class="sub">'+text+'</p><div style="max-width:360px;margin:18px auto 0">'+bar(stats(s),1)+'<small style="display:block;margin-top:6px">'+stats(s).pct+'% of this set mastered</small></div><div class="ctrl"><button class="btn pri" data-act="again">Go again</button><a class="btn" href="#set/'+esc(s.id)+'">Back to set</a></div></div></div>';
+function doneView(s,title,text){
+  var x=stats(s);
+  return '<div class="study"><div class="panel done"><h2>'+title+'</h2><p class="sub" style="margin:0 auto">'+text+'</p><div style="max-width:380px;margin:20px auto 0">'+seg(x,1)+'<small style="display:block;margin-top:8px">'+t('pct_set',x.pct)+'</small></div><div class="ctrl"><button class="btn pri" data-act="again">'+t('again')+'</button><a class="btn" href="#set/'+esc(s.id)+'">'+t('back_set')+'</a></div></div></div>';
 }
+function termH(s,c){var v=L(c.t);return '<div class="tt'+(s.zh?' zh'+(v.length>3?' long':''):'')+'"'+zhA(s)+'>'+esc(v)+'</div>';}
 function vStudy(){
   var z=session,s=getSet(z.id);
   if(z.mode==='flash'){
-    if(z.i>=z.q.length)return doneView(s,'🏁','You went through every card','Knew '+z.right+', still learning '+z.wrong+'.');
-    var c=z.q[z.i];
-    return '<div class="study">'+studyTop(s,(z.i+1)+' / '+z.q.length,z.i,z.q.length)+'<div class="flip'+(z.flip?' f':'')+'" data-act="flip" role="button" tabindex="0" aria-label="Flip card"><div class="flip-in"><div class="face" data-l="Term">'+esc(c.t)+'</div><div class="face b" data-l="Definition">'+esc(c.d)+'</div></div></div><div class="ctrl"><button class="btn" data-act="fl" data-id="0">← Still learning</button><button class="btn pri" data-act="fl" data-id="1">Know it →</button></div><p class="hint">Tap the card or press Space to flip. Arrow keys sort it.</p></div>';
+    if(z.i>=z.q.length)return doneView(s,t('fl_done'),t('fl_done_s',z.right,z.wrong));
+    var c=z.q[z.i],dfirst=S.front==='d';
+    var A='<div>'+termH(s,c)+'</div>',B='<div>'+(c.p?'<div class="py">'+esc(c.p)+'</div>':'')+imgH(c,'big')+'<div class="dd">'+esc(L(c.d))+'</div></div>';
+    return '<div class="study">'+studyTop(s,(z.i+1)+' / '+z.q.length,z.i,z.q.length)+'<div class="flip'+(z.flip?' f':'')+'" data-act="flip" role="button" tabindex="0"><div class="flip-in"><div class="face"><span class="fl">'+(dfirst?t('defn'):t('term'))+'</span>'+(dfirst?B:A)+'</div><div class="face b"><span class="fl">'+(dfirst?t('term'):t('defn'))+'</span>'+(dfirst?A:B)+'</div></div></div><div class="ctrl"><button class="btn" data-act="fl" data-id="0">'+t('still')+'</button><button class="btn pri" data-act="fl" data-id="1">'+t('know')+'</button></div><p class="hint">'+t('flash_hint')+'</p><p class="hint"><button class="chip" data-act="front">'+(dfirst?t('front_d'):t('front_t'))+'</button></p></div>';
   }
   if(z.mode==='learn'){
-    if(z.i>=z.q.length)return doneView(s,z.wrong?'💪':'🎉',z.wrong?'Round finished':'Perfect round',z.right+' right, '+z.wrong+' to review.');
-    var q=z.q[z.i],done=z.pick!==null;
-    return '<div class="study">'+studyTop(s,(z.i+1)+' / '+z.q.length,z.i,z.q.length)+'<div class="q" style="margin-top:16px"><small>Choose the matching definition</small><h2>'+esc(q.t)+'</h2><div class="opts">'+z.opts.map(function(o,i){var cl=done?(o===q.d?' ok':(i===z.pick?' no':'')):'';return '<button class="opt'+cl+'" data-act="opt" data-id="'+i+'"'+(done?' disabled':'')+'><kbd>'+(i+1)+'</kbd><span>'+esc(o)+'</span></button>';}).join('')+'</div>'+(done?'<div class="fb"><span style="color:var(--'+(z.opts[z.pick]===q.d?'ok)">Correct, nice one!':'bad)">Not quite. The right answer is highlighted.')+'</span><button class="btn pri" data-act="next">Continue</button></div>':'')+'</div><p class="hint">Press 1–'+z.opts.length+' to answer, Enter to continue.</p></div>';
+    if(z.i>=z.q.length)return doneView(s,z.wrong?t('round_done'):t('perfect'),t('round_s',z.right,z.wrong));
+    var q=z.q[z.i],done=z.pick!==null,ok=done&&z.opts[z.pick].id===q.id;
+    return '<div class="study">'+studyTop(s,(z.i+1)+' / '+z.q.length,z.i,z.q.length)+'<div class="q" style="margin-top:16px"><small>'+t('choose')+'</small>'+termH(s,q)+(q.p?'<div class="py">'+(done?esc(q.p):'')+'</div>':'')+'<div class="opts">'+z.opts.map(function(o,i){var cl=done?(o.id===q.id?' ok':(i===z.pick?' no':'')):'';return '<button class="opt'+cl+'" data-act="opt" data-id="'+i+'"'+(done?' disabled':'')+'><kbd>'+(i+1)+'</kbd><span class="ob">'+imgH(o,'sm')+'<span>'+esc(L(o.d))+'</span></span></button>';}).join('')+'</div>'+(done?'<div class="fb"><span class="delta '+(ok?'up':'down')+'">'+(ok?'▲ '+t('correct'):'▼ '+t('notq'))+'</span><button class="btn pri" data-act="next">'+t('cont_b')+'</button></div>':'')+'</div><p class="hint">'+t('learn_hint',z.opts.length)+'</p></div>';
   }
-  if(z.left===0){
-    var best=prog(z.id).best;
-    return doneView(s,'⚡','Matched in '+z.time.toFixed(1)+' s',best&&best<z.time?'Your best is '+best.toFixed(1)+' s. Try to beat it.':'That is your best time so far.');
-  }
-  return '<div class="study"><div class="study-top"><a class="btn sm ghost" href="#set/'+esc(s.id)+'">← Back</a><b>'+esc(s.title)+'</b><small id="mtime">0.0 s</small></div><div class="match">'+z.tiles.map(function(t,i){return '<button class="mt'+(t.gone?' gone':'')+(z.sel===i?' sel':'')+(z.bad.indexOf(i)>=0?' bad':'')+'" data-act="mt" data-id="'+i+'">'+esc(t.x)+'</button>';}).join('')+'</div><p class="hint">Tap a term, then its definition.</p></div>';
+  if(z.left===0){var best=prog(z.id).best;return doneView(s,t('match_done',z.time.toFixed(1)),best&&best<z.time?t('match_best',best.toFixed(1)):t('match_new'));}
+  return '<div class="study">'+studyTop(s,((Date.now()-z.t0)/1000).toFixed(1)+' s')+'<div class="match">'+z.tiles.map(function(m,i){return '<button class="mt'+(m.gone?' gone':'')+(z.sel===i?' sel':'')+(z.bad.indexOf(i)>=0?' bad':'')+'" data-act="mt" data-id="'+i+'"'+(m.side==='t'?zhA(s):'')+'>'+(m.side==='t'?esc(L(m.c.t)):imgH(m.c,'sm')+'<span>'+esc(L(m.c.d))+'</span>')+'</button>';}).join('')+'</div><p class="hint">'+t('match_hint')+'</p></div>';
 }
 
 /* ---------- editor ---------- */
-function newDraft(id){
-  var s=id&&S.sets[id];
-  if(s)return {id:id,title:s.title,topic:s.topic,desc:s.desc||'',cards:s.cards.map(function(c){return {id:c.id,t:c.t,d:c.d};}),next:s.cards.reduce(function(m,c){return Math.max(m,c.id+1);},0),err:''};
-  return {id:null,title:'',topic:'languages',desc:'',cards:[{id:0,t:'',d:''},{id:1,t:'',d:''},{id:2,t:'',d:''}],next:3,err:''};
+function newDraft(id,copy){
+  if(!id)return {id:null,title:'',topic:'languages',desc:'',zh:false,cards:[0,1,2].map(function(i){return {id:i,t:'',d:'',p:'',img:''};}),next:3,err:''};
+  var s=copy?getSet(id):S.sets[id];if(!s)return null;
+  var cards=s.cards.map(function(c,i){return {id:copy?i:c.id,t:L(c.t),d:L(c.d),p:c.p||'',img:c.img||''};});
+  return {id:copy?null:id,title:copy?t('copy_of',L(s.title)):s.title,topic:tkey(s),desc:L(s.desc),zh:!!s.zh,cards:cards,next:cards.reduce(function(m,c){return Math.max(m,c.id+1);},0),err:''};
 }
 function vEdit(){
   var d=draft;
-  return '<div class="stack" style="max-width:820px;margin:0 auto"><div class="head"><h1>'+(d.id?'Edit set':'Create a new set')+'</h1><button class="btn pri" data-act="saveSet">Save set</button></div><section class="panel"><label class="field"><span>Title</span><input type="text" data-df="title" maxlength="80" placeholder="e.g. Biology, chapter 4" value="'+esc(d.title)+'"></label><div class="two" style="margin-top:14px"><label class="field"><span>Topic</span><select data-df="topic">'+Object.keys(TOPICS).map(function(k){return '<option value="'+k+'"'+(d.topic===k?' selected':'')+'>'+esc(TOPICS[k].n)+'</option>';}).join('')+'</select></label><label class="field"><span>Description (optional)</span><input type="text" data-df="desc" maxlength="120" value="'+esc(d.desc)+'"></label></div></section><section class="panel"><h2>Cards</h2><div style="margin-top:8px">'+d.cards.map(function(c,i){return '<div class="crow"><i>'+(i+1)+'</i><input type="text" data-ci="'+i+'" data-cf="t" placeholder="Term" aria-label="Term '+(i+1)+'" value="'+esc(c.t)+'"><input type="text" data-ci="'+i+'" data-cf="d" placeholder="Definition" aria-label="Definition '+(i+1)+'" value="'+esc(c.d)+'"><button class="btn sm ghost" data-act="rmCard" data-id="'+i+'" aria-label="Remove card '+(i+1)+'">✕</button></div>';}).join('')+'</div><button class="btn" data-act="addCard" style="margin-top:12px">+ Add card</button></section>'+(d.err?'<p class="err" role="alert">'+esc(d.err)+'</p>':'')+'<div class="head"><a class="btn ghost" href="'+(d.id?'#set/'+esc(d.id):'#materials')+'">Cancel</a><button class="btn pri" data-act="saveSet">Save set</button></div></div>';
+  return '<div class="stack" style="max-width:820px;margin:0 auto"><div class="head"><h1>'+(d.id?t('ed_edit'):t('ed_new'))+'</h1><button class="btn pri" data-act="saveSet">'+t('save')+'</button></div><section class="panel"><label class="field"><span>'+t('title')+'</span><input type="text" data-df="title" maxlength="80" placeholder="'+t('title_ph')+'" value="'+esc(d.title)+'"></label><div class="crow-f" style="margin-top:14px"><label class="field"><span>'+t('topic')+'</span><select data-df="topic">'+Object.keys(TOPICS).map(function(k){return '<option value="'+k+'"'+(d.topic===k?' selected':'')+'>'+esc(tname(k))+'</option>';}).join('')+'</select></label><label class="field"><span>'+t('desc')+'</span><input type="text" data-df="desc" maxlength="140" value="'+esc(d.desc)+'"></label></div></section><section class="panel"><h2>'+t('cards_h')+'</h2><div style="margin-top:6px">'+d.cards.map(function(c,i){
+    return '<div class="crow"><div class="crow-top"><b>'+(i+1)+'</b>'+imgH(c,'sm')+'<label class="btn sm file"><input type="file" accept="image/*" data-file="card" data-ci="'+i+'">'+(c.img?t('pic_change'):t('pic_add'))+'</label>'+(c.img?'<button class="btn sm" data-act="rmPic" data-id="'+i+'">'+t('pic_rm')+'</button>':'')+'<button class="btn sm" data-act="rmCard" data-id="'+i+'" aria-label="'+t('rm_card')+' '+(i+1)+'">✕</button></div><div class="crow-f"><input type="text" data-ci="'+i+'" data-cf="t" placeholder="'+t('term_ph')+'" aria-label="'+t('term_ph')+' '+(i+1)+'" value="'+esc(c.t)+'"><input type="text" data-ci="'+i+'" data-cf="d" placeholder="'+t('def_ph')+'" aria-label="'+t('def_ph')+' '+(i+1)+'" value="'+esc(c.d)+'"></div><div class="crow-f"><input type="text" data-ci="'+i+'" data-cf="p" placeholder="'+t('hint_ph')+'" aria-label="'+t('hint_ph')+' '+(i+1)+'" value="'+esc(c.p)+'"></div></div>';
+  }).join('')+'</div><button class="btn" data-act="addCard" style="margin-top:12px">+ '+t('add_card')+'</button></section>'+(d.err?'<p class="err" role="alert">'+esc(d.err)+'</p>':'')+'<div class="head"><a class="btn" href="'+(d.id?'#set/'+esc(d.id):'#materials')+'">'+t('cancel')+'</a><button class="btn pri" data-act="saveSet">'+t('save')+'</button></div></div>';
+}
+function readImg(file,max,square){
+  return new Promise(function(res,rej){
+    if(!file||!/^image\//.test(file.type)){rej();return;}
+    var r=new FileReader();r.onerror=rej;
+    r.onload=function(){
+      var im=new Image();im.onerror=rej;
+      im.onload=function(){
+        var w=im.naturalWidth,h=im.naturalHeight,sx=0,sy=0,sw=w,sh=h,dw,dh;
+        if(!w||!h){rej();return;}
+        if(square){var m=Math.min(w,h);sx=(w-m)/2;sy=(h-m)/2;sw=sh=m;dw=dh=max;}
+        else{var k=Math.min(1,max/Math.max(w,h));dw=Math.max(1,Math.round(w*k));dh=Math.max(1,Math.round(h*k));}
+        var c=document.createElement('canvas');c.width=dw;c.height=dh;var g=c.getContext('2d');
+        g.fillStyle='#fff';g.fillRect(0,0,dw,dh);g.drawImage(im,sx,sy,sw,sh,0,0,dw,dh);
+        res(c.toDataURL('image/jpeg',.82));
+      };
+      im.src=r.result;
+    };
+    r.readAsDataURL(file);
+  });
 }
 
-/* ---------- router ---------- */
+/* ---------- header and router ---------- */
+var NAV=[['home','nav_home','M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z'],['materials','nav_mat','M5 6h12a2 2 0 0 1 2 2v12H7a2 2 0 0 1-2-2zM8 3h11a2 2 0 0 1 2 2v12'],['progress','nav_prog','M4 20V10M10 20V4M16 20v-7M22 20H2'],['discover','nav_disc','M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM15.5 8.5l-2 5-5 2 2-5z']];
+function topH(r){
+  var cur={materials:1,progress:1,discover:1,profile:1}[r.v]?r.v:{set:1,study:1,create:1,edit:1,copy:1}[r.v]?'materials':'home';
+  return '<div class="top-in"><a class="logo" href="#home" aria-label="FlashCar"><svg viewBox="0 0 32 32" aria-hidden="true"><rect x="3" y="5" width="26" height="22" rx="5" fill="currentColor"/><path class="bolt" d="M17.5 8.5l-6 8.5H16l-1.5 6.5 6-8.5H16z"/></svg><span>FlashCar</span></a><nav aria-label="Main">'+NAV.map(function(n){return '<a href="#'+n[0]+'"'+(cur===n[0]?' class="on" aria-current="page"':'')+'><svg viewBox="0 0 24 24" aria-hidden="true"><path d="'+n[2]+'"/></svg>'+t(n[1])+'</a>';}).join('')+'</nav><div class="top-r">'+segc('setLang',lang,[['en','EN'],['ru','RU']])+'<button class="ib hide-s" data-act="theme" aria-label="'+t('theme')+'" title="'+t('theme')+'"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9z"/></svg></button><a class="btn pri sm" href="#create" aria-label="'+t('create')+'">+<span class="hide-s">'+t('create')+'</span></a><a href="#profile" aria-label="'+t('profile')+'">'+avatarH()+'</a></div></div>';
+}
+function parse(){var h=(location.hash||'#home').slice(1).split('/');var a='';try{a=decodeURIComponent(h[1]||'');}catch(e){}return {v:h[0],a:a,b:h[2]||''};}
+function view(r){
+  switch(r.v){
+    case 'materials':return vMaterials();
+    case 'progress':return vProgress();
+    case 'discover':return vDiscover();
+    case 'profile':return vProfile();
+    case 'set':return vSet(r.a);
+    case 'study':return session?vStudy():vSet(r.a);
+    case 'create':case 'edit':case 'copy':return draft?vEdit():vSet('');
+    default:return vHome();
+  }
+}
+function paint(){var r=parse();document.documentElement.lang=lang;$top.innerHTML=topH(r);$app.innerHTML=view(r);}
 function route(){
-  var h=(location.hash||'#home').slice(1).split('/'),v=h[0],nav=v;
-  endSession();armed=null;
-  var html;
-  if(v==='materials')html=vMaterials();
-  else if(v==='progress')html=vProgress();
-  else if(v==='discover')html=vDiscover();
-  else if(v==='profile')html=vProfile();
-  else if(v==='set'){html=vSet(decodeURIComponent(h[1]||''));nav='materials';}
-  else if(v==='study'){startSession(decodeURIComponent(h[1]||''),h[2]||'flash');html=session?vStudy():vSet('');nav='materials';}
-  else if(v==='create'||v==='edit'){draft=newDraft(v==='edit'?decodeURIComponent(h[1]||''):null);html=vEdit();nav='materials';}
-  else{html=vHome();nav='home';}
-  $app.innerHTML=html;
-  [].forEach.call(document.querySelectorAll('#nav a'),function(a){var on=a.getAttribute('data-n')===nav;a.classList.toggle('on',on);if(on)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});
-  var av=document.getElementById('avatar');av.textContent=(S.name||'A').charAt(0).toUpperCase();av.classList.toggle('on',v==='profile');
-  window.scrollTo(0,0);
+  var r=parse();endSession();armed=null;draft=null;
+  if(r.v==='study')startSession(r.a,r.b);
+  if(r.v==='create')draft=newDraft();
+  if(r.v==='edit')draft=newDraft(r.a);
+  if(r.v==='copy')draft=newDraft(r.a,true);
+  paint();window.scrollTo(0,0);
 }
-function redraw(){
-  var v=(location.hash||'#home').slice(1).split('/');
-  if(session){$app.innerHTML=vStudy();return;}
-  if(v[0]==='create'||v[0]==='edit'){$app.innerHTML=vEdit();return;}
-  var y=window.scrollY;
-  $app.innerHTML=v[0]==='materials'?vMaterials():v[0]==='progress'?vProgress():v[0]==='discover'?vDiscover():v[0]==='profile'?vProfile():v[0]==='set'?vSet(decodeURIComponent(v[1]||'')):vHome();
-  window.scrollTo(0,y);
-}
+function redraw(){var y=window.scrollY;paint();window.scrollTo(0,y);}
+function applyTheme(){document.documentElement.setAttribute('data-theme',S.theme||((window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches)?'light':'dark'));}
 
 /* ---------- actions ---------- */
 function arm(name){if(armed===name){armed=null;return true;}armed=name;redraw();return false;}
 var acts={
-  lib:function(id){
-    var i=S.library.indexOf(id);
-    if(i>=0){S.library.splice(i,1);toast('Removed from your materials');}else{S.library.unshift(id);toast('Added to your materials');}
-    save();redraw();
-  },
+  lib:function(id){var i=S.library.indexOf(id);if(i>=0){S.library.splice(i,1);toast(t('t_removed'));}else{S.library.unshift(id);toast(t('t_added'));}save();redraw();},
   matTopic:function(id){ui.matTopic=id;redraw();},
   disTopic:function(id){ui.disTopic=id;redraw();},
-  theme:function(){S.theme=document.documentElement.getAttribute('data-theme')==='light'?'dark':'light';save();applyTheme();},
+  goTopic:function(id){ui.matTopic=id;ui.matQ='';if(parse().v==='materials')redraw();else location.hash='#materials';},
+  theme:function(){S.theme=document.documentElement.getAttribute('data-theme')==='light'?'dark':'light';save();applyTheme();redraw();},
+  setTheme:function(id){S.theme=id;save();applyTheme();redraw();},
+  setLang:function(id){lang=S.lang=id;save();redraw();},
   jump:function(id){var e=document.getElementById('tp-'+id);if(e){e.open=true;e.scrollIntoView({behavior:'smooth',block:'start'});}},
-  wipe:function(){if(arm('wipe')){S={name:'',library:[],sets:{},progress:{},activity:{},theme:S.theme};save();toast('Everything erased');redraw();}},
-  reset:function(id){if(arm('reset')){delete S.progress[id];save();toast('Progress reset');redraw();}},
-  del:function(id){if(arm('del')){delete S.sets[id];delete S.progress[id];S.library=S.library.filter(function(x){return x!==id;});save();toast('Set deleted');location.hash='#materials';}},
+  rmAvatar:function(){delete S.avatar;save();redraw();},
+  wipe:function(){if(arm('wipe')){S={name:'',library:[],sets:{},progress:{},days:{},theme:S.theme,lang:lang,v:2};save();toast(t('t_erased'));redraw();}},
+  reset:function(id){if(arm('reset')){delete S.progress[id];save();toast(t('t_reset'));redraw();}},
+  del:function(id){if(arm('del')){delete S.sets[id];delete S.progress[id];S.library=S.library.filter(function(x){return x!==id;});save();toast(t('t_deleted'));location.hash='#materials';}},
   flip:function(){session.flip=!session.flip;var e=document.querySelector('.flip');if(e)e.classList.toggle('f',session.flip);},
+  front:function(){S.front=S.front==='d'?'t':'d';save();session.flip=false;redraw();},
   fl:function(v){var z=session;if(z.i>=z.q.length)return;var ok=v==='1';record(z.id,z.q[z.i].id,ok);if(ok)z.right++;else z.wrong++;z.i++;z.flip=false;redraw();},
-  opt:function(v){var z=session;if(z.pick!==null)return;z.pick=+v;var q=z.q[z.i],ok=z.opts[z.pick]===q.d;record(z.id,q.id,ok);if(ok)z.right++;else z.wrong++;redraw();var n=document.querySelector('[data-act=next]');if(n)n.focus();},
+  opt:function(v){var z=session;if(z.pick!==null)return;z.pick=+v;var q=z.q[z.i],ok=z.opts[z.pick].id===q.id;record(z.id,q.id,ok);if(ok)z.right++;else z.wrong++;redraw();var n=document.querySelector('[data-act=next]');if(n)n.focus();},
   next:function(){var z=session;z.i++;if(z.i<z.q.length)mkOpts();redraw();},
   mt:function(v){
-    var z=session,i=+v,t=z.tiles[i];if(t.gone||z.bad.length)return;
-    if(z.sel===null){z.sel=i;}
-    else if(z.sel===i){z.sel=null;}
+    var z=session,i=+v,m=z.tiles[i];if(m.gone||z.bad.length)return;
+    if(z.sel===null)z.sel=i;
+    else if(z.sel===i)z.sel=null;
     else{
       var a=z.tiles[z.sel];
-      if(a.k===t.k&&a.side!==t.side){a.gone=t.gone=true;z.sel=null;z.left--;
-        if(z.left===0){clearInterval(z.timer);z.time=(Date.now()-z.t0)/1000;var p=prog(z.id);if(!p.best||z.time<p.best)p.best=z.time;touch(z.id,z.pairs);}
-      }else{z.bad=[z.sel,i];z.sel=null;setTimeout(function(){if(session===z){z.bad=[];redraw();}},350);}
+      if(a.c.id===m.c.id&&a.side!==m.side){
+        a.gone=m.gone=true;z.sel=null;z.left--;today().r++;prog(z.id).last=Date.now();if(!inLib(z.id))S.library.unshift(z.id);
+        if(z.left===0){clearInterval(z.timer);z.time=(Date.now()-z.t0)/1000;var p=prog(z.id);if(!p.best||z.time<p.best)p.best=z.time;}
+        save();
+      }else{today().w++;save();z.bad=[z.sel,i];z.sel=null;setTimeout(function(){if(session===z){z.bad=[];redraw();}},350);}
     }
     redraw();
   },
   again:function(){var z=session;endSession();startSession(z.id,z.mode);redraw();},
-  addCard:function(){draft.cards.push({id:draft.next++,t:'',d:''});draft.err='';redraw();var r=document.querySelectorAll('[data-cf=t]');if(r.length)r[r.length-1].focus();},
+  addCard:function(){draft.cards.push({id:draft.next++,t:'',d:'',p:'',img:''});draft.err='';redraw();var r=document.querySelectorAll('[data-cf=t]');if(r.length)r[r.length-1].focus();},
   rmCard:function(v){draft.cards.splice(+v,1);redraw();},
+  rmPic:function(v){draft.cards[+v].img='';redraw();},
   saveSet:function(){
-    var d=draft,cards=d.cards.map(function(c){return {id:c.id,t:c.t.trim(),d:c.d.trim()};}).filter(function(c){return c.t&&c.d;});
-    if(!d.title.trim()){d.err='Give your set a title.';redraw();return;}
-    if(cards.length<2){d.err='Add at least two cards with both a term and a definition.';redraw();return;}
-    var id=d.id||('my'+Date.now().toString(36));
-    S.sets[id]={id:id,title:d.title.trim(),topic:d.topic,desc:d.desc.trim(),cards:cards};
-    if(!inLib(id))S.library.unshift(id);
-    save();toast('Set saved');location.hash='#set/'+id;
+    var d=draft,cards=d.cards.map(function(c){var o={id:c.id,t:c.t.trim(),d:c.d.trim()};if(c.p&&c.p.trim())o.p=c.p.trim();if(c.img)o.img=c.img;return o;}).filter(function(c){return c.t&&(c.d||c.img);});
+    if(!d.title.trim()){d.err=t('err_title');redraw();return;}
+    if(cards.length<2){d.err=t('err_cards');redraw();return;}
+    var id=d.id||('my'+Date.now().toString(36)),old=S.sets[id],hadLib=inLib(id);
+    S.sets[id]={id:id,title:d.title.trim(),topic:d.topic,desc:d.desc.trim(),zh:d.zh||d.topic==='chinese',cards:cards};
+    if(!hadLib)S.library.unshift(id);
+    if(!save()){if(old)S.sets[id]=old;else delete S.sets[id];if(!hadLib)S.library.shift();d.err=t('t_full');redraw();return;}
+    toast(t('t_saved'));location.hash='#set/'+id;
   }
 };
 document.addEventListener('click',function(e){
@@ -568,18 +859,28 @@ document.addEventListener('click',function(e){
   if(acts[a])acts[a](b.getAttribute('data-id'));
 });
 document.addEventListener('input',function(e){
-  var t=e.target;
-  if(t.id==='matQ'){ui.matQ=t.value;document.getElementById('matList').innerHTML=matList();}
-  else if(t.id==='disQ'){ui.disQ=t.value;document.getElementById('disList').innerHTML=disList();}
-  else if(t.id==='nameIn'){S.name=t.value.trim();save();var c=(S.name||'A').charAt(0).toUpperCase();[].forEach.call(document.querySelectorAll('.avatar'),function(a){a.textContent=c;});}
-  else if(draft&&t.hasAttribute('data-df')){draft[t.getAttribute('data-df')]=t.value;}
-  else if(draft&&t.hasAttribute('data-ci')){draft.cards[+t.getAttribute('data-ci')][t.getAttribute('data-cf')]=t.value;}
+  var el=e.target;
+  if(el.id==='matQ'){ui.matQ=el.value;document.getElementById('matList').innerHTML=matList();}
+  else if(el.id==='disQ'){ui.disQ=el.value;document.getElementById('disList').innerHTML=disList();}
+  else if(el.id==='nameIn'){S.name=el.value.trim();save();if(!S.avatar){var c=(S.name||'A').charAt(0).toUpperCase();[].forEach.call(document.querySelectorAll('.avatar'),function(a){a.textContent=c;});}}
+  else if(draft&&el.hasAttribute('data-df')){draft[el.getAttribute('data-df')]=el.value;}
+  else if(draft&&el.hasAttribute('data-cf')){draft.cards[+el.getAttribute('data-ci')][el.getAttribute('data-cf')]=el.value;}
+});
+document.addEventListener('change',function(e){
+  var el=e.target,kind=el.getAttribute&&el.getAttribute('data-file');if(!kind||!el.files||!el.files[0])return;
+  var file=el.files[0];
+  if(kind==='avatar'){
+    readImg(file,160,true).then(function(url){var old=S.avatar;S.avatar=url;if(!save()){if(old)S.avatar=old;else delete S.avatar;toast(t('t_full'));}else toast(t('t_photo'));redraw();},function(){toast(t('t_badimg'));});
+  }else if(kind==='card'&&draft){
+    var i=+el.getAttribute('data-ci');
+    readImg(file,360,false).then(function(url){if(draft&&draft.cards[i]){draft.cards[i].img=url;redraw();}},function(){toast(t('t_badimg'));});
+  }
 });
 document.addEventListener('keydown',function(e){
   if(!session||/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName))return;
   var z=session;
   if(z.mode==='flash'&&z.i<z.q.length){
-    if(e.key===' '||e.key==='Enter'){if(e.key===' '||e.target.classList.contains('flip')){e.preventDefault();acts.flip();}}
+    if(e.key===' '||(e.key==='Enter'&&e.target.classList.contains('flip'))){e.preventDefault();acts.flip();}
     else if(e.key==='ArrowRight')acts.fl('1');
     else if(e.key==='ArrowLeft')acts.fl('0');
   }else if(z.mode==='learn'&&z.i<z.q.length){
@@ -587,10 +888,6 @@ document.addEventListener('keydown',function(e){
     else if(z.pick!==null&&e.key==='Enter'){e.preventDefault();acts.next();}
   }
 });
-function applyTheme(){
-  var t=S.theme||((window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches)?'light':'dark');
-  document.documentElement.setAttribute('data-theme',t);
-}
 applyTheme();
 window.addEventListener('hashchange',route);
 route();
